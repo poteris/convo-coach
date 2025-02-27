@@ -17,6 +17,7 @@ interface ScenarioSetupComponentProps {
     readonly scenarioId: string;
 }
 
+
 const ScenarioSetupSkeleton = () => {
     return (
         <>
@@ -69,6 +70,17 @@ async function generatePersona() {
     }
 }
 
+
+async function startChat( initialMessage: string, scenarioId: string, persona: Persona ) {
+    const response = await axios.post<{ id: string }>("/api/chat/initialise-chat", {
+        userId: uuidv4(),
+        scenarioId,
+        persona,
+      });
+      console.log("response", response.data.id);
+      return response.data.id;
+}
+
 export default function ScenarioSetup({ scenarioId }: ScenarioSetupComponentProps) {
     const router = useRouter();
     const [, setScenario] = useAtom(scenarioAtom);
@@ -117,9 +129,11 @@ export default function ScenarioSetup({ scenarioId }: ScenarioSetupComponentProp
         }
     };
 
-    function handleStartChat() {
+    async function handleStartChat() {
         if (!selectedScenario || !persona) return;
-        router.push(`/initiate-chat?scenarioId=${selectedScenario.id}&personaId=${persona.id}`);
+        const { id: conversationId } = await startChat(uuidv4(), scenarioId, persona);
+        // navigate to chat screen
+        router.push(`/chat/${conversationId}`);
     }
 
     if (isLoading) {
