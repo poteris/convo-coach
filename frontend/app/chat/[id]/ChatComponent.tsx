@@ -35,12 +35,12 @@ async function sendUserMessage(conversationId: string, content: string, scenario
     return response.data;
   } catch (error) {
     console.error('Error sending message:', error);
-    throw error; // Propagate error to be handled by the caller
+    throw error; 
   }
 }
 
 interface ChatComponentProps {
-  conversationData: ConversationData;
+  conversationData: ConversationData
 }
 
 const ChatComponent = ({ conversationData: initialConversationData }: ChatComponentProps) => {
@@ -126,7 +126,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
 
   const handleConfirmEndChat = () => {
     setIsEndChatModalOpen(false);
-    router.push(`/feedback?conversationId=${conversationData?.conversationId}`);
+    router.push(`/feedback?conversationId=${conversationData?.id}`);
   }
 
   return (

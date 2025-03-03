@@ -131,9 +131,16 @@ export default function ScenarioSetup({ scenarioId }: ScenarioSetupComponentProp
 
     async function handleStartChat() {
         if (!selectedScenario || !persona) return;
-        const { id: conversationId } = await startChat(uuidv4(), scenarioId, persona);
-        // navigate to chat screen
-        router.push(`/chat/${conversationId}`);
+        try {
+            setIsStarting(true);
+            const { id: conversationId } = await startChat(uuidv4(), scenarioId, persona);
+            router.push(`/chat/${conversationId}`);
+        } catch (error) {
+            console.error('Error starting chat:', error);
+            // You may want to show a toast/notification here
+        } finally {
+            setIsStarting(false);
+        }
     }
 
     if (isLoading) {
