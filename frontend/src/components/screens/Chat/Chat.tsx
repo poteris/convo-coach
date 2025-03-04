@@ -16,6 +16,7 @@ import { ChatInput } from "@/components/ChatInput/ChatInput"
 import { ConversationData, Message } from "../../../../app/chat/[id]/page";
 import { v4 as uuidv4 } from 'uuid';
 import { useParams } from 'next/navigation';
+import "./Chat.css";
 async function getConversationData(conversationId: string): Promise<ConversationData | null> {
   try {
     const response = await axios.get<ConversationData>(`/api/chat/${conversationId}`);
@@ -137,10 +138,10 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
         {conversationData?.messages.map((m) => (
           <div key={m.id} className={`mb-4 ${m.role === "user" ? "text-right" : "text-left"}`}>
             <div
-              className={`inline-block p-4 rounded-lg text-sm max-w-[600px] break-words ${
+              className={`inline-block p-4 rounded-[16px] text-sm max-w-[600px] break-words relative ${
                 m.role === "user"
-                  ? "bg-slate-50 text-black"
-                  : "bg-primary text-white"
+                  ? "bg-slate-50 text-black tail-user"
+                  : "bg-primary text-white tail-assistant"
               }`}
             >
               {m.content}
