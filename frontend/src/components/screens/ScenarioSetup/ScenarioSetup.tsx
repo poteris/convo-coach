@@ -12,6 +12,7 @@ import ScenarioDescription from "./ScenarioDescription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonBlock } from "./SkeletonBlock";
 import ScenarioSetupLayout from "./Layout";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ScenarioSetupComponentProps {
     readonly scenarioId: string;
@@ -88,7 +89,6 @@ export default function ScenarioSetup({ scenarioId }: ScenarioSetupComponentProp
     const [selectedScenario, setSelectedScenario] = useState<TrainingScenario | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRegeneratingPersona, setIsRegeneratingPersona] = useState(false);
-
     useEffect(() => {
         async function fetchData() {
             setIsLoading(true);
@@ -132,15 +132,11 @@ export default function ScenarioSetup({ scenarioId }: ScenarioSetupComponentProp
     async function handleStartChat() {
         if (!selectedScenario || !persona) return;
         try {
-            setIsStarting(true);
             const { id: conversationId } = await startChat(uuidv4(), scenarioId, persona);
             router.push(`/chat/${conversationId}`);
         } catch (error) {
             console.error('Error starting chat:', error);
-            // You may want to show a toast/notification here
-        } finally {
-            setIsStarting(false);
-        }
+        } 
     }
 
     if (isLoading) {
