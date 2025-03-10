@@ -10,7 +10,7 @@ import axios from "axios"
 
 async function signInWithOtp(email: string) {
   const redirectUrl = new URL(`${window.location.origin}/admin`)
-  const response = await axios.post('/api/signin', { email, redirectUrl: redirectUrl.toString() })
+  const response = await axios.post('/api/admin-signin', { email, redirectUrl: redirectUrl.toString() })
   return response.data
 }
 
