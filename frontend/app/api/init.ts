@@ -18,9 +18,11 @@ export const openaiClient = new OpenAI({
  * Future implementations will allow multiple admin users
  * This function ensures that there is only one admin user
  * and creates a new one if there are none
+ * NOTE: for this
  */
 async function signUpAdmin() {
   try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
     if (!process.env.ADMIN_EMAIL) {
       console.log('No ADMIN_EMAIL provided, skipping admin user setup');
       return;
