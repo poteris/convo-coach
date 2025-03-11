@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import LoginForm from '../login/LoginForm'
+import LoginForm from '@/components/AdminLogin/LoginForm'
 import { SiteAdmin } from '@/components/screens/SiteAdmin'
 
 
