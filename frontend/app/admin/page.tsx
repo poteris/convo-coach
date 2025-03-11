@@ -1,13 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
 import LoginForm from '../login/LoginForm'
 import { SiteAdmin } from '@/components/screens/SiteAdmin'
-import { redirect } from 'next/navigation'
 
-/**
- * Checks if a user has admin privileges
- * @param user The user object from Supabase auth
- * @returns boolean indicating if the user has admin role
- */
+
 function isAdmin(user: { user_metadata?: { role?: string } } | null): boolean {
   return user?.user_metadata?.role === 'admin'
 }
