@@ -2,11 +2,12 @@ import { PromptWithDetails, PromptWithDetailsSchema } from "@/types/prompt";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { Result, err, ok } from "@/types/result";
-import { supabase } from "../../init";
+import { createClient } from "@/utils/supabase/server";
 
 
 
 async function getSystemPrompts(): Promise<Result<PromptWithDetails[], string>> {
+  const supabase = await createClient();
   const { data, error } = await supabase.from("system_prompts").select("*").order("created_at", { ascending: true });
 
   if (error) {

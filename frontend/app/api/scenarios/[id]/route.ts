@@ -1,4 +1,4 @@
-import { supabase } from "../../init";
+import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { Result, err, ok, Option } from "@/types/result";
 import { getScenarioById } from "@/lib/server/db";
@@ -6,6 +6,7 @@ async function updateScenarioObjectives(
   scenarioId: string,
   objectives: string[],
 ): Promise<Result<Option<void>, string>> {
+  const supabase = await createClient();
   // First delete existing objectives
   const { error: deleteError } = await supabase
     .from("scenario_objectives")
@@ -48,8 +49,10 @@ async function updateScenarioDetails(
     objectives?: string[];
   },
 ): Promise<Result<Option<void>, string>> {
+  const supabase = await createClient();
   // Update scenario details if provided
   if (updates.title || updates.description || updates.context) {
+    
     const { error: scenarioError } = await supabase
       .from("scenarios")
       .update({
@@ -104,6 +107,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 // i.e. the scenario id is not found
 // TODO: Update to handle the case where the scenario id is not found
 async function deleteScenario(scenarioId: string): Promise<Result<Option<void>, string>> {
+  const supabase = await createClient();
   // First delete the objectives for this scenario
   const { error: objectivesError } = await supabase
     .from("scenario_objectives")

@@ -1,13 +1,14 @@
 import { NextResponse, NextRequest } from "next/server";
 import { Result, Option, err, ok } from "@/types/result";
 import { z } from "zod";
-import { supabase } from "../../init";
+import { createClient } from "@/utils/supabase/server";
 
 async function updatePrompt(
   id: number,
   type: "system" | "feedback" | "persona",
   content: string
 ): Promise<Result<Option<void>, string>> {
+  const supabase = await createClient();
   const { error } = await supabase.from(`${type}_prompts`).update({ content }).eq("id", id);
 
   if (error) {
