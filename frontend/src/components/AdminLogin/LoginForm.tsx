@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
-import { z } from "zod"
 
 
 export default function LoginForm() {
@@ -17,6 +16,8 @@ export default function LoginForm() {
   const [isLinkSent, setIsLinkSent] = useState(false)
 
   useEffect(() => {
+    // Supabase allows only one login link per email address per minute
+    // we  show a countdown to the user to prevent spam and better user experience
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
       return () => clearTimeout(timer)
@@ -43,7 +44,7 @@ export default function LoginForm() {
       } else {
         setMessage('Magic link sent! Check your email.');
         setIsLinkSent(true);
-        setCountdown(60); // Set countdown to prevent spam
+        setCountdown(60);
       }
     } catch (err) {
       setMessage('An error occurred. Please try again.');
