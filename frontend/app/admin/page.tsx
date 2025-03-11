@@ -1,25 +1,38 @@
-// app/admin/page.tsx
 import { createClient } from '@/utils/supabase/server'
 import LoginForm from '../login/LoginForm'
-import { logoutUser } from '../login/actions'
 import { SiteAdmin } from '@/components/screens/SiteAdmin'
+import { redirect } from 'next/navigation'
 
-
-function isAdmin(user: any) {
-  return user.email === 'admin@example.com'
+/**
+ * Checks if a user has admin privileges
+ * @param user The user object from Supabase auth
+ * @returns boolean indicating if the user has admin role
+ */
+function isAdmin(user: { user_metadata?: { role?: string } } | null): boolean {
+  return user?.user_metadata?.role === 'admin'
 }
 
 export default async function AdminPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
   
-  
-  if (!user) {
-    return <LoginForm />
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error) {
+      console.error('Error fetching user:', error)
+      return <LoginForm />
+    }
+    
+    if (!user || !isAdmin(user)) {
+      return <LoginForm />
+    }
+        
+    return (
+      <SiteAdmin />
+    )
+  } catch (error) {
+    console.error('Error in AdminPage:', error)
+    // Only show generic error to frontend
+    return <div>Unable to access admin page. Please try again later.</div>
   }
-  
-  return (
-    <SiteAdmin />
-  )
 }
