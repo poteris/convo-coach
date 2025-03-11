@@ -1,9 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
-import { supabase } from "../../init";
+import { createClient } from "@/utils/supabase/server";
 import {DatabaseError, DatabaseErrorCodes} from "@/utils/errors";
-
 async function updatePrompt(id: number, type: "system" | "feedback" | "persona", content: string) {
+  const supabase = await createClient();
   const { error } = await supabase.from(`${type}_prompts`).update({ content }).eq("id", id);
   if (error) {
     const dbError = new DatabaseError(`Error updating ${type} prompt`, "update_prompt", DatabaseErrorCodes.Update, {
