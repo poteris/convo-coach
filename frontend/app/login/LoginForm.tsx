@@ -1,57 +1,105 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { loginWithOtp } from './actions'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
+import { z } from "zod"
+
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const [isLinkSent, setIsLinkSent] = useState(false)
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    } else if (countdown === 0 && isLinkSent) {
+      setIsLinkSent(false)
+    }
+  }, [countdown, isLinkSent])
+
   
-  const handleLogin = async (formData: FormData) => {
-    const { error } = await loginWithOtp(formData)
+  const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
     
-    if (error) {
-      setMessage('Error: ' + error.message)
-    } else {
-      setMessage('Magic link sent! Check your email.')
+    try {
+      // Create FormData from the email state
+      const formData = new FormData();
+      formData.append('email', email);
+      
+      const { error } = await loginWithOtp(formData);
+      
+      if (error) {
+        setMessage('An error occurred. Please try again.');
+        console.error('Login error:', error.message);
+      } else {
+        setMessage('Magic link sent! Check your email.');
+        setIsLinkSent(true);
+        setCountdown(60); // Set countdown to prevent spam
+      }
+    } catch (err) {
+      setMessage('An error occurred. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow">
-        <h1 className="text-2xl font-bold text-center">Admin Login</h1>
-        
-        {message && (
-          <div className="p-4 bg-blue-100 rounded-md text-blue-800">
-            {message}
-          </div>
-        )}
-        
-        <form action={handleLogin} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email Address
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+          <CardDescription className="text-center">Enter your email to receive a login link</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          
+          <div className="space-y-2">
+            <label
+              htmlFor="email"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ml-2"
+            >
+              Email address
             </label>
-            <input
+            <Input
               id="email"
-              name="email"
-              type="email"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Your email address"
+              type="email"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+              disabled={isLoading}
             />
           </div>
-          
-          <button
-            type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          <Button 
+            onClick={handleLogin} 
+            className="w-full" 
+            disabled={isLoading || countdown > 0} 
           >
-            Send Magic Link
-          </button>
-        </form>
-      </div>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                Sending link...
+              </>
+            ) : (
+              countdown > 0 
+                ? `Wait ${countdown}s to resend` 
+                : 'Send Magic Link'
+            )}
+          </Button>
+          {message && <p className="text-center text-sm text-gray-500 mt-2">{message}</p>}
+        </CardContent>
+      </Card>
     </div>
   )
 }
