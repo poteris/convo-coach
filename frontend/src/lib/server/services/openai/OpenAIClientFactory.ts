@@ -1,13 +1,13 @@
-import { OpenAIClientInterface } from './OpenAIClientInterface';
+import { AIClientInterface } from './AIClientInterface';
 import { MockOpenAIClient } from './MockOpenAIClient';
-import { RealOpenAIClient } from './RealOpenAIClient'; 
+import { OpenAIClient } from './OpenAIClient'; 
 
-export function getOpenAIClient(headers: Headers = new Headers()): OpenAIClientInterface {
-    const useMock = process.env.USE_MOCK_OPENAI === 'true';
+export function getOpenAIClient(headers: Headers = new Headers()): AIClientInterface {
+    const useMocks = process.env.USE_MOCK_OPENAI === 'true';
 
     if (headers.get('x-use-real-openai')) {
-        return new RealOpenAIClient();
+        return new OpenAIClient();
     }
 
-    return useMock ? new MockOpenAIClient() : new RealOpenAIClient();
+    return useMocks ? new MockOpenAIClient() : new OpenAIClient();
 } 

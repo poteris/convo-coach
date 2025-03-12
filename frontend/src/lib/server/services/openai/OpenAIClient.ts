@@ -2,7 +2,7 @@ import { OpenAI } from "openai";
 import { AIClientInterface } from './AIClientInterface';
 import { ChatCompletionResponse, ChatCompletionRequest } from './ChatCompletionTypes';
 
-export class RealOpenAIClient implements AIClientInterface {
+export class OpenAIClient implements AIClientInterface {
     private openai: OpenAI;
 
     constructor() {
