@@ -220,5 +220,5 @@ export async function getScenarioById(scenarioId: string): Promise<Result<Traini
     return err(`Error fetching objectives: ${objectivesError.message}`);
   }
 
-  return ok({ ...scenario, objectives: objectives.map((obj) => obj.objective) });
+  return ok({ ...scenario, objectives: objectives.map((obj: { objective: string }) => obj.objective) });
 }
