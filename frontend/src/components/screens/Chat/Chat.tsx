@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { LogOut, SendHorizontal } from "lucide-react"
 import { ChatInput } from "@/components/ChatInput/ChatInput"
-import { ConversationData, Message } from "./page";
+import { ConversationData, Message } from "../../../../app/chat/[id]/page";
 import { v4 as uuidv4 } from 'uuid';
 async function getConversationData(conversationId: string): Promise<ConversationData | null> {
   try {
@@ -130,61 +130,62 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
   }
 
   return (
-    <div className="grid min-h-screen grid-rows-[1fr_auto] p-4 md:p-6">
-      <div className="max-w-[1200px] mx-auto w-full mt-10 grid grid-rows-[1fr_auto] gap-4 h-full">
-        {/* Messages Container */}
-        <div className="overflow-auto space-y-4">
-          {conversationData?.messages.map((m) => (
+    <div className=" w-full max-w-full sm:max-w-3xl lg:max-w-[1045px] lg:min-w-[1045px] mx-auto p-4 pb-32">
+      {/* Messages Container */}
+      <div className="mb-4">
+        {conversationData?.messages.map((m) => (
+          <div key={m.id} className={`mb-4 ${m.role === "user" ? "text-right" : "text-left"}`}>
             <div
-              key={m.id}
-              className={`grid ${m.role === "user" ? "justify-items-end" : "justify-items-start"}`}
-            >
-              <span
-                className={`p-4 rounded-lg text-sm w-fit max-w-[600px] break-words ${m.role === "user"
-                  ? "bg-primary-light text-black"
+              className={`inline-block p-4 rounded-lg text-sm max-w-[600px] break-words ${
+                m.role === "user"
+                  ? "bg-slate-50 text-black"
                   : "bg-primary text-white"
-                  }`}
-              >
-                {m.content}
-              </span>
+              }`}
+            >
+              {m.content}
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
 
-        {/* Input Container */}
-        <div className="grid grid-cols-[1fr_auto] gap-3 mb-10">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="grid grid-cols-[1fr_auto] gap-3"
-          >
-            <ChatInput
-              ref={inputRef}
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your message..."
-              disabled={isLoading}
-            />
+      {/* Input Container */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white max-w-[1200px] mx-auto">
+        <div className="max-w-[1200px] mx-auto p-4">
+          <div className="flex gap-3">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage();
+              }}
+              className="flex-1 grid grid-cols-[1fr_auto] gap-3 w-full max-w-full sm:max-w-3xl lg:max-w-[1045px] lg:min-w-[1045px] "
+            >
+              <ChatInput
+                ref={inputRef}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your message..."
+                disabled={isLoading}
+                
+              />
+
+              <Button
+                type="submit"
+                className="text-base py-2 px-4 rounded-full whitespace-nowrap flex items-center justify-center text-sm"
+                disabled={isLoading || !inputMessage.trim()}
+              >
+                Send
+                <SendHorizontal className="w-4 h-4 ml-2" />
+              </Button>
+            </form>
 
             <Button
-              type="submit"
-              className="text-base py-2 px-4 rounded-full whitespace-nowrap flex items-center justify-center text-sm"
-              disabled={isLoading || !inputMessage.trim()}
+              onClick={handleEndChat}
+              className="bg-red-500 text-white hover:bg-red-600"
             >
-              Send
-              <SendHorizontal className="w-4 h-4 ml-2" />
+              <LogOut />
             </Button>
-          </form>
-
-          <Button
-            onClick={handleEndChat}
-            className="bg-red-500 text-white hover:bg-red-600"
-          >
-            <LogOut />
-          </Button>
+          </div>
         </div>
       </div>
 

@@ -6,14 +6,13 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Persona } from "@/types/persona";
 import { TrainingScenario } from "@/types/scenarios";
-import ChatComponent from "./ChatComponent";
+import ChatComponent from "../screens/Chat/Chat";
 import InitChat from "./InitChat";
-import { Message, ConversationData } from "./page";
+import { Message, ConversationData } from "../../../app/chat/[id]/page";
 const PROMPTS = [
   "Hi, can I interrupt you for a sec?",
   "Hey, how are you doing?",
   "Hey mate, sorry to bother you - how's it going?",
-  "What are you up to?",
 ];
 
 interface CreateNewChatRequest {

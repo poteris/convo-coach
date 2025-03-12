@@ -1,6 +1,6 @@
 "use client"
-import StartChat from "./StartChat";
-import ChatComponent from "./ChatComponent";
+import StartChat from "../../../src/components/Chat/StartChat";
+import ChatComponent from "../../../src/components/screens/Chat/Chat";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useParams } from 'next/navigation';
