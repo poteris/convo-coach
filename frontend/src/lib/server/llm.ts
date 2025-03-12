@@ -4,22 +4,22 @@ import { Persona } from "@/types/persona";
 import { TrainingScenario } from "@/types/scenarios";
 import Handlebars from "handlebars";
 import { getOpenAIClient } from './services/openai/OpenAIClientFactory';
-import { IncomingHttpHeaders } from 'http';
+import { ChatCompletionRequest } from './services/openai/ChatCompletionTypes';
 
 const llm_model = process.env.LLM_MODEL || "gpt-4o";
 
-export async function getAIResponse(messages: OpenAI.ChatCompletionMessageParam[], headers: IncomingHttpHeaders): Promise<string | null> {
+export async function getAIResponse(messages: OpenAI.ChatCompletionMessageParam[], headers: Headers = new Headers()): Promise<string | null> {
   const formattedMessages = messages.map((msg) => ({
     role: msg.role as "user" | "system" | "assistant",
     content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
   }));
-  const params: OpenAI.Chat.ChatCompletionCreateParams = {
+  const params: ChatCompletionRequest = {
     messages: formattedMessages,
     model: llm_model,
   };
 
   const completion = await getOpenAIClient(headers).createChatCompletion(params);
-  return completion.choices[0].message.content;
+  return completion.choices[0]?.message?.content ?? null;
 }
 
 export async function createBasePromptForMessage(

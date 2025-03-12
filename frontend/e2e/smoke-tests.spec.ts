@@ -41,10 +41,10 @@ test('Route back to landing page from scenario setup page', async () => {
 });
 
 test('Persona loads on scenario page, using real OpenAI API', async () => {
+  await page.setExtraHTTPHeaders({
+    'x-use-real-openai': 'true'
+  });
   await page.goto(`${baseUrl}/scenario-setup?scenarioId=member-recruitment`, {
-    headers: {
-      'x-use-real-openai': 'true'
-    },
     timeout: 15000, // Timeout allows (a lot of) timefor API to respond
   });
   await page.waitForResponse(`${baseUrl}/api/persona/generate-new-persona`);

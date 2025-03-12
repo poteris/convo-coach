@@ -5,7 +5,6 @@ import {  getAIResponse, createBasePromptForMessage } from "@/lib/server/llm";
 import { getConversationContext, saveMessages } from "@/lib/server/db";
 import OpenAI from "openai";
 import { supabase } from "../../init";
-import { IncomingHttpHeaders } from 'http';
 
 const userMessageResponseSchema = z.object({
   id: z.string(),
@@ -20,7 +19,7 @@ const sendUserMessageRequestSchema = z.object({
 });
 
 
-async function sendMessage(headers: IncomingHttpHeaders, { conversationId, content }: { conversationId: string; content: string; scenarioId?: string }) {
+async function sendMessage(headers: Headers, { conversationId, content }: { conversationId: string; content: string; scenarioId?: string }) {
   try {
     // Get conversation context
     const { persona, scenario, systemPrompt } = await getConversationContext(conversationId);
@@ -76,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     const parsedBody = sendUserMessageRequestSchema.parse(body);
 
-    const { content } = await sendMessage(req.headers as IncomingHttpHeaders, parsedBody);
+    const { content } = await sendMessage(req.headers as Headers, parsedBody);
 
     if (!content) {
       console.error("Error invoking assistant function:");

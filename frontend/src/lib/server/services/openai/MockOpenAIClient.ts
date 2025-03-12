@@ -1,10 +1,11 @@
 import { OpenAIClientInterface } from './OpenAIClientInterface';
 import { v4 as uuidv4 } from 'uuid';
+import { ChatCompletionRequest, ChatCompletionResponse } from './ChatCompletionTypes';
 
 export class MockOpenAIClient implements OpenAIClientInterface {
 
-  async createChatCompletion(request: any): Promise<any> {
-    if (request.tool_choice?.function?.name === "generate_persona") {
+  async createChatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
+    if ( request.tool_choice?.function?.name === "generate_persona") {
       // Mock response for generate_persona
       return { 
         choices: [{

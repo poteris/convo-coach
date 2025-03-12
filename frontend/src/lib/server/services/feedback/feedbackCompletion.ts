@@ -1,18 +1,15 @@
 'use server'
-import OpenAI from "openai";
 import { getFeedbackPrompt } from "@/lib/server/services/feedback/feedbackPrompt";
 import { getOpenAIClient } from "../openai/OpenAIClientFactory";
 import { tools } from "@/utils/openaiTools";
 
-
 export async function generateFeedbackUsingLLM(conversationId: string) {
   const feedbackPrompt = await getFeedbackPrompt(conversationId);
-  const messages: OpenAI.ChatCompletionMessageParam[] = [{ role: "user", content: feedbackPrompt }];
   const llm = process.env.LLM_MODEL || "gpt-4o";
   const openaiClient = getOpenAIClient();
   const completion = await openaiClient.createChatCompletion({
     model: llm,
-    messages: messages,
+    messages: [{ role: "user", content: feedbackPrompt }],
     tools: tools,
     store: true,
     tool_choice: { type: "function", function: { name: "generate_feedback" } },
