@@ -45,7 +45,7 @@ async function sendMessage({ conversationId, content }: { conversationId: string
         content: `${completePrompt}\n\nRemember to maintain consistent personality and context throughout the conversation. Previous context: This is message ${messagesData.length + 1} in the conversation.`
       },
       // Previous conversation history
-        ...messagesData.map((msg) => ({
+        ...messagesData.map((msg: { role: string; content: string }) => ({
           role: msg.role as "user" | "system" | "assistant",
           content: msg.content,
         } as OpenAI.ChatCompletionMessageParam)),

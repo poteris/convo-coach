@@ -350,5 +350,5 @@ const supabase = await createClient();
     throw dbError;
   }
 
-  return { ...scenario, objectives: objectives.map((obj) => obj.objective) };
+  return ok({ ...scenario, objectives: objectives.map((obj: { objective: string }) => obj.objective) });
 }
