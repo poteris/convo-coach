@@ -1,8 +1,8 @@
 import { getScenarios } from "@/lib/server/services/scenarios/getScenarios";
 import { TrainingScenario } from "@/types/scenarios";
-import { NextResponse, NextRequest } from "next/server";
-import { supabase } from "../init";
-import {  DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
+import { NextResponse, NextRequest } from "next/server";import {  DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
+import { createClient } from "@/utils/supabase/server";
+
 
 
 export async function GET() {
@@ -16,6 +16,7 @@ export async function GET() {
 }
 
 async function createScenarioWithObjectives(scenario: TrainingScenario) {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("scenarios")
     .insert({
