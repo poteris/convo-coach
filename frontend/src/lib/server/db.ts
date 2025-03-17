@@ -269,13 +269,10 @@ export async function getFeedbackPrompt(): Promise<FeedbackPrompt> {
   const feedbackPrompt = feedbackPromptSchema.safeParse(data);
 
   if (!feedbackPrompt.success) {
-    const dbError = new DatabaseError("Error parsing feedback prompt", "getFeedbackPrompt", DatabaseErrorCodes.Select, {
-      details: {
-        error: feedbackPrompt.error,
-      }
+    console.error("Failed to validate feedback prompt", feedbackPrompt.error);
+    throw new Error("Failed to validate feedback prompt", {
+      cause: feedbackPrompt.error,
     });
-    console.error(dbError.toLog());
-    throw dbError;
   }
 
   return feedbackPrompt.data;
