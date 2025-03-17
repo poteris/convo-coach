@@ -18,7 +18,7 @@ export const openaiClient = new OpenAI({
  * Future implementations will allow multiple admin users
  * This function ensures that there is only one admin user
  * and creates a new one if there are none
- * NOTE: for this
+ * NOTE: for this to work, the ADMIN_EMAIL environment variable must be set
  */
 async function signUpAdmin() {
   try {
@@ -61,7 +61,10 @@ async function signUpAdmin() {
         user_metadata: {
           role: 'admin'
         },
-        email_confirm: true  // This confirms the email without sending verification
+         /* This confirms the email without sending verification
+         on startup we expect the creator of the app to add the admin user manually
+         so don't need to verify the email */
+        email_confirm: true 
       });
 
       if (error) {

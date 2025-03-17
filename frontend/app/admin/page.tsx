@@ -27,7 +27,6 @@ export default async function AdminPage() {
     )
   } catch (error) {
     console.error('Error in AdminPage:', error)
-    // Only show generic error to frontend
     return <div>Unable to access admin page. Please try again later.</div>
   }
 }

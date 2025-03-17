@@ -1,4 +1,5 @@
-
+// for more info on how this works see: https://supabase.com/docs/guides/auth/server-side/nextjs
+// NOTE: this can be an api route or a server action
 'use server'
 
 import { createClient } from '@/utils/supabase/server'

@@ -1,4 +1,5 @@
-
+// for more info on how this works see: https://supabase.com/docs/guides/auth/server-side/nextjs
+// NOTE: this is the middleware that is used to update the session. It is a server-side supabase client
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 

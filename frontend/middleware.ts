@@ -1,3 +1,4 @@
+// for more info on how this works see: https://supabase.com/docs/guides/auth/server-side/nextjs
 import { type NextRequest } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
 
@@ -15,6 +16,6 @@ export const config = {
      * Feel free to modify this pattern to include more paths.
      */
     // '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-    '/admin/:path*',
+    '/admin/:path*', // NOTE: we only run this middleware for the admin page
   ],
 }
