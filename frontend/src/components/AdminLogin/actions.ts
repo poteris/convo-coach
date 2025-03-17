@@ -8,8 +8,11 @@ import { redirect } from 'next/navigation'
 export async function loginWithOtp(formData: FormData) {
   const supabase = await createClient()
   const email = formData.get('email') as string
-  console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
   
+  if (!email) {
+    console.error('Email is required for OTP sign-in.')
+    return { error: 'Email is required for OTP sign-in.' }
+  }
   try {
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -19,11 +22,13 @@ export async function loginWithOtp(formData: FormData) {
     })
     if (error) {
       console.error('Error during OTP sign-in:', error.message)
-      return { error }
+      return { error: 'Failed to send login link. Please try again.' }
     }
+    
+    return { success: true }
   } catch (err) {
     console.error('Unexpected error during OTP sign-in:', err)
-    return { error: err }
+    return { error: 'An unexpected error occurred. Please try again later.' }
   }
 }
 
