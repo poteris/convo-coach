@@ -4,6 +4,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import axios from 'axios'
 
 export async function loginWithOtp(formData: FormData) {
   const supabase = await createClient()
@@ -14,12 +15,23 @@ export async function loginWithOtp(formData: FormData) {
     return { error: 'Email is required for OTP sign-in.' }
   }
   try {
-    const { error } = await supabase.auth.signInWithOtp({
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+    const response = await axios.post(`${baseUrl}/api/auth/admin/verify`, { email })
+    const data = response.data
+    
+    if (response.status !== 200) {
+      console.error('Error during admin verification:', data.error)
+      return { error: data.error || 'Failed to verify admin status' }
+    }
+
+     // If verification passed, send magic link
+     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/callback`,
+        emailRedirectTo: `${baseUrl}/auth/callback`,
       },
     })
+    
     if (error) {
       console.error('Error during OTP sign-in:', error.message)
       return { error: 'Failed to send login link. Please try again.' }
