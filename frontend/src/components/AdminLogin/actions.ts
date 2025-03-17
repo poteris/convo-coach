@@ -39,7 +39,37 @@ export async function loginWithOtp(formData: FormData) {
     
     return { success: true }
   } catch (err) {
-    console.error('Unexpected error during OTP sign-in:', err)
+    // Enhanced error logging
+    if (axios.isAxiosError(err)) {
+      const statusCode = err.response?.status
+      const responseData = err.response?.data
+      
+      console.error(`Admin verification failed with status ${statusCode}:`, {
+        message: err.message,
+        url: err.config?.url,
+        method: err.config?.method,
+        responseData,
+      })
+      
+      // Return appropriate user-facing messages based on status code
+      if (statusCode === 403) {
+        return { error: 'Access denied. You may not have permission to access the admin area.' }
+      } else if (statusCode === 404) {
+        return { error: 'The authentication service is currently unavailable. Please try again later.' }
+      } else if (statusCode === 400) {
+        return { error: responseData?.error || 'Invalid request. Please check your information and try again.' }
+      } else {
+        return { error: 'Authentication service error. Please try again later.' }
+      }
+    }
+    
+    // For non-Axios errors
+    console.error('Unexpected error during OTP sign-in:', {
+      error: err,
+      message: err instanceof Error ? err.message : 'Unknown error',
+      stack: err instanceof Error ? err.stack : undefined
+    })
+    
     return { error: 'An unexpected error occurred. Please try again later.' }
   }
 }
