@@ -10,5 +10,5 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 // admin user is redirected to the admin page after login
-  return NextResponse.redirect(new URL('/admin', request.url))
+  return NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/admin`, request.url))
 }
