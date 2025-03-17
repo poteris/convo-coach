@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { z } from 'zod'
 
+const emailSchema = z.string().email()
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -29,18 +31,27 @@ export default function LoginForm() {
   
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    
+    // Validate email before submission
+    const validatedEmail = emailSchema.safeParse(email)
+    if (!validatedEmail.success) {
+      setMessage('Invalid email address')
+      return
+    }
+
+    
     setIsLoading(true);
     
     try {
       // Create FormData from the email state
       const formData = new FormData();
-      formData.append('email', email);
+      formData.append('email', validatedEmail.data);
       
       const { error } = await loginWithOtp(formData);
       
       if (error) {
-        setMessage('An error occurred. Please try again.');
-        console.error('Login error:', error.message);
+        setMessage(error);
+        console.error('Login error:', error);
       } else {
         setMessage('Magic link sent! Check your email.');
         setIsLinkSent(true);
