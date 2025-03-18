@@ -23,6 +23,7 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
 });
 
 test('Landing page loads and the call to action button starts the user journey for member recruitment', async () => {
+  expect(false).toBe(true);  // Intentional failure
   await page.goto(`${baseUrl}`);
   await page.waitForResponse(`${baseUrl}/api/scenarios`);
   const startScenarioButton = page.getByTestId('startScenarioButton-0');
