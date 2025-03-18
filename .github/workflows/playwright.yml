@@ -17,7 +17,7 @@ on:
          required: true
 jobs:
   smoke-test-suite:
-    timeout-minutes: 60
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: develop # The github environment to use
     env: 
@@ -50,9 +50,16 @@ jobs:
         echo "Started Next.js with PID $NEXTJS_PID"
         echo "NEXTJS_PID=$NEXTJS_PID" >> $GITHUB_ENV  # Store the PID for later use
         echo "Waiting for Next.js app to start..."
+        MAX_ATTEMPTS=12  # 2 minutes @ 10 seconds per attempt
+        attempt_counter=0
         until curl -s --head --request GET http://localhost:3000 | grep "200 OK"; do
           echo "Waiting for Next.js to be available..."
-          sleep 5
+          sleep 10
+          attempt_counter=$((attempt_counter + 1))
+          if [ $attempt_counter -ge $MAX_ATTEMPTS ]; then
+            echo "Timeout: Next.js app did not start within 2 minutes."
+            exit 1
+          fi
         done
         echo "Next.js app is up and running!"
     - name: Run Playwright tests
