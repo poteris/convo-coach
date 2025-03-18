@@ -317,5 +317,5 @@ export async function getScenarioById(scenarioId: string): Promise<TrainingScena
     throw dbError;
   }
 
-  return { ...scenario, objectives: objectives.map((obj) => obj.objective) };
+  return ok({ ...scenario, objectives: objectives.map((obj) => obj.objective) });
 }
