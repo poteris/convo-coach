@@ -95,9 +95,6 @@ jobs:
   slack-notifier:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
     needs: smoke-test-suite
     steps:
       - name: Get failure info
