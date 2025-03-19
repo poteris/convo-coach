@@ -63,11 +63,10 @@ jobs:
         done
         echo "Next.js app is up and running!"
         echo "nextjs_app_started=true" >> $GITHUB_ENV
-    - name: Run Playwright tests and Convert JUnit output to CTRF
+    - name: Run Playwright tests
       if: ${{ success() && !cancelled() }}
       working-directory: ./frontend
-      run: |
-        pnpm exec playwright test e2e
+      run: pnpm exec playwright test e2e
     - name: Convert JUnit output to CTRF
       if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
       working-directory: ./frontend
