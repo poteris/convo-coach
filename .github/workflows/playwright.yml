@@ -124,6 +124,7 @@ jobs:
                 text:
                   type: "mrkdwn"
                   text: "*E2E smoke suite test result*: ${{ needs.smoke-test-suite.result == 'failure' && '❌ *FAILURE*' || '✓ Success' }} \n
+                    PR Title: `${{ github.event.pull_request.title }}`\n
                     See the report <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|here> 
                     ${{ needs.smoke-test-suite.result == 'failure' && '<!channel>' || '' }}\n
                     ${{ steps.failure-info.outputs.ERRORS_OUTPUT }}"
