@@ -68,7 +68,10 @@ jobs:
       working-directory: ./frontend
       run: |
         pnpm exec playwright test e2e
-        pnpm exec junit-to-ctrf playwright-report/results.xml -o playwright-report/results.json
+    - name: Convert JUnit output to CTRF
+      if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
+      working-directory: ./frontend
+      run: pnpm exec junit-to-ctrf playwright-report/results.xml -o playwright-report/results.json
     - uses: actions/upload-artifact@v4
       if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
       with:
