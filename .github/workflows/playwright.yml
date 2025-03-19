@@ -64,22 +64,23 @@ jobs:
         echo "Next.js app is up and running!"
         echo "nextjs_app_started=true" >> $GITHUB_ENV
     - name: Run Playwright tests and Convert JUnit output to CTRF
+      if: ${{ success() && !cancelled() }}
       working-directory: ./frontend
       run: |
         pnpm exec playwright test e2e
         pnpm exec junit-to-ctrf playwright-report/results.xml -o playwright-report/results.json
-      if: ${{ success() && !cancelled() }}
     - uses: actions/upload-artifact@v4
       if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
       with:
         name: playwright-report
         path: frontend/playwright-report/
     - name: Publish Test Report Summary
+      if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
       uses: ctrf-io/github-test-reporter@v1
-      if: ${{ success() && !cancelled() }}
       with:
         report-path: 'frontend/playwright-report/*.json'
     - name: Clean up
+      if: ${{ always() }}
       run: |
         if [ -n "$NEXTJS_PID" ]; then
           kill $NEXTJS_PID
@@ -88,8 +89,8 @@ jobs:
           echo "No Next.js process found."
         fi      
   slack-notifier:
-    runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
