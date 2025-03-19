@@ -15,8 +15,6 @@ on:
          required: true
        OPENAI_API_KEY:
          required: true
-       GH_TOKEN:
-         required: true
 jobs:
   smoke-test-suite:
     timeout-minutes: 10
@@ -27,7 +25,6 @@ jobs:
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         E2E_TEST_BASE_URL: ${{ vars.E2E_TEST_BASE_URL }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -94,6 +91,9 @@ jobs:
         fi      
   slack-notifier:
     if: ${{ !cancelled() }}
+    permissions:
+      actions: read
+      contents: read
     runs-on: ubuntu-latest
     needs: smoke-test-suite
     steps:
@@ -105,7 +105,7 @@ jobs:
             echo "ERRORS_OUTPUT<<$delimiter"
             curl -v -L \
               -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               https://api.github.com/repos/${{ github.repository }}/actions/jobs/${{ needs.smoke-test-suite.outputs.job-id }}/logs \
               | (grep 'Error:' || echo "No errors found") | sed "s,\x1B\[[0-9;]*[a-zA-Z],,g"
