@@ -1,8 +1,8 @@
 import { test, expect, type Page, type Browser, ConsoleMessage, Response } from '@playwright/test';
 import dotenv from 'dotenv';
 
-// Load environment variables from .env file
-dotenv.config();
+// Load environment variables from root level .env file
+dotenv.config({ path: '../.env' });
 
 const baseUrl = process.env.E2E_TEST_BASE_URL;
 const startChatText = "hi there";

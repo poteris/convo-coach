@@ -56,8 +56,8 @@ pnpm dev
 - Before first run, install playwright browsers and set the host and port of your dev server:
 ```bash
 pnpm exec playwright install --with-deps
-echo E2E_TEST_BASE_URL=http://localhost:3000 >> ./frontend/.env
-echo USE_MOCK_OPENAI=true >> ./frontend/.env
+echo E2E_TEST_BASE_URL=http://localhost:3000 >> ./.env
+echo USE_MOCK_OPENAI=true >> ./.env
 ```
 - Then to execute the E2E smoke test suite:
 ```bash
