@@ -50,10 +50,10 @@ test('Start chat button is visible and starts the chat', async () => {
   const startChatButton = page.getByTestId('startChatButton');
   await expect(startChatButton).toBeVisible();
   await Promise.all([
-    page.waitForURL(`${baseUrl}/initiate-chat**`),
+    page.waitForURL(`${baseUrl}/chat/**`),
     startChatButton.click()
   ]);
-  await expect(page).toHaveURL(new RegExp(`^${baseUrl}/initiate-chat\\?scenarioId=member-recruitment&personaId=`));
+  await expect(page).toHaveURL(new RegExp(`^${baseUrl}/chat/[\\w-]+$`));
 });
 
 test('Text box is visible: Entering text and pressing CTA starts chat ', async () => {
