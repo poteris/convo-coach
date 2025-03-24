@@ -170,6 +170,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
               />
 
               <Button
+                data-testid="sendMessageButton"
                 type="submit"
                 className="text-base py-2 px-4 rounded-full whitespace-nowrap flex items-center justify-center text-sm"
                 disabled={isLoading || !inputMessage.trim()}

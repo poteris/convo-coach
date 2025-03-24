@@ -16,6 +16,7 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(({
 }, ref) => {
     return (
         <Input
+            data-testid="startChatInput"
             ref={ref}
             value={value}
             onChange={onChange}

@@ -57,15 +57,28 @@ test('Start chat button is visible and starts the chat', async () => {
 });
 
 test('Text box is visible: Entering text and pressing CTA starts chat ', async () => {
-  const startChatInput = page.getByTestId('startChatInput');
-  await expect(startChatInput).toBeVisible({ timeout: 10000 });
+  // Wait for the page to be fully loaded
+  await page.waitForLoadState('networkidle');
+  
+  // Wait for the input to be visible using role and placeholder
+  const startChatInput = page.getByRole('textbox', { name: 'Start typing...' });
+  try {
+    await expect(startChatInput).toBeVisible({ timeout: 15000 });
+  } catch (error) {
+    console.error('Failed to find chat input element. Current page content:', await page.content());
+    throw error;
+  }
+  
   await startChatInput.fill(startChatText);
   
+  // Wait for navigation to chat page with correct URL pattern
   await Promise.all([
-    page.waitForURL(`${baseUrl}/chat-screen**`),
-    page.getByTestId('initiateSendButton').click()
+    page.waitForURL(new RegExp(`^${baseUrl}/chat/[\\w-]+$`)),
+    page.getByRole('button', { name: 'Send' }).click()
   ]);
-  await expect(page.url()).toEqual(expect.stringContaining(`${baseUrl}/chat-screen`));
+  
+  // Verify we're on the correct page
+  await expect(page.url()).toMatch(new RegExp(`^${baseUrl}/chat/[\\w-]+$`));
 });
 
 test('Chat page loads and messages can be exchanged', async () => {
