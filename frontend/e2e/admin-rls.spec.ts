@@ -9,17 +9,20 @@ const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Need service role key to verify user creation
 
 test.describe('Admin User Creation', () => {
-  let supabaseAdmin: SupabaseClient;
+  let supabaseSuperUser: SupabaseClient;
+  let adminUser: SupabaseClient;
   const testAdminEmail = process.env.ADMIN_EMAIL!;
+  const testAdminPassword = "testadminpassword";
 
   test.beforeAll(async () => {
     // Initialize Supabase client with service role key
-    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    supabaseSuperUser = createClient(supabaseUrl, supabaseServiceKey);
+    adminUser = createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY!);
   });
 
   test.afterAll(async () => {
 
-    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: existingUsers, error: listError } = await supabaseSuperUser.auth.admin.listUsers();
     
     if (listError) {
       throw new Error(`Failed to list users: ${listError.message}`);
@@ -31,7 +34,7 @@ test.describe('Admin User Creation', () => {
     
     for (const user of adminUsers) {
       if (user.email !== testAdminEmail) {
-        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+        const { error: deleteError } = await supabaseSuperUser.auth.admin.deleteUser(user.id);
         if (deleteError) {
           console.error(`Failed to delete admin user ${user.email}: ${deleteError.message}`);
         } else {
@@ -44,11 +47,9 @@ test.describe('Admin User Creation', () => {
 
   test('Admin can be added', async ({ browserName }) => {
     try {
-      console.log(`Running test on browser: ${browserName}`);
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      
+
       // First check if the user already exists
-      const { data: existingUser, error: listError } = await supabase.auth.admin.listUsers();
+      const { data: existingUser, error: listError } = await supabaseSuperUser.auth.admin.listUsers();
       
       if (listError) {
         console.error('Error listing users:', {
@@ -58,7 +59,7 @@ test.describe('Admin User Creation', () => {
         throw new Error(`Failed to list users: ${listError.message}`);
       }
 
-      const adminUser = existingUser?.users?.find(u => u.email === process.env.ADMIN_EMAIL);
+      const adminUser = existingUser?.users?.find(u => u.email === testAdminEmail);
       
       let userData;
       
@@ -72,8 +73,9 @@ test.describe('Admin User Creation', () => {
         userData = adminUser;
       } else {
         // Step 1: Create an admin user for testing
-        const { data, error } = await supabase.auth.admin.createUser({
-          email: process.env.ADMIN_EMAIL,
+        const { data, error } = await supabaseSuperUser.auth.admin.createUser({
+          email: testAdminEmail,
+          password: testAdminPassword,
           user_metadata: {
             role: 'admin'
           },
@@ -120,7 +122,7 @@ test.describe('Admin User Creation', () => {
       }
 
       // Verify the user exists in the database
-      const { data: verifyData, error: verifyError } = await supabase.auth.admin.getUserById(userData.id);
+      const { data: verifyData, error: verifyError } = await supabaseSuperUser.auth.admin.getUserById(userData.id);
       
       if (verifyError || !verifyData.user) {
         console.error('Failed to verify admin user:', {
@@ -157,8 +159,26 @@ test.describe('Admin User Creation', () => {
   });
 
   test('Admin can access system prompts', async ({ browserName }) => {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: prompts, error } = await supabase.from('system_prompts').select('*');
+    // sign in as admin
+    const { data: signInData, error: signInError } = await adminUser.auth.signInWithPassword({
+      email: testAdminEmail,
+      password: testAdminPassword
+    });
+    if (signInError) {
+      console.error('Error signing in:', {
+        browser: browserName,
+        error: signInError
+      });
+      throw new Error(`Failed to sign in: ${signInError.message}`);
+    }
+    console.log('Admin signed in successfully:', {
+      browser: browserName,
+      userId: signInData.user.id,
+      email: signInData.user.email,
+      role: signInData.user.user_metadata?.role
+    });
+    
+    const { data: prompts, error } = await adminUser.from('system_prompts').select('*');
 
     if (error) {
       console.error('Error fetching system prompts:', {
@@ -170,8 +190,8 @@ test.describe('Admin User Creation', () => {
     expect(prompts).not.toBeNull();
   });
   test('Admin can access persona prompts', async ({ browserName }) => {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: prompts, error } = await supabase.from('persona_prompts').select('*');
+
+    const { data: prompts, error } = await adminUser.from('persona_prompts').select('*');
     if (error) {
       console.error('Error fetching persona prompts:', {
         browser: browserName,
@@ -182,8 +202,7 @@ test.describe('Admin User Creation', () => {
     expect(prompts).not.toBeNull();
   });
   test('Admin can access feedback prompts', async ({ browserName }) => {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: prompts, error } = await supabase.from('feedback_prompts').select('*');
+    const { data: prompts, error } = await adminUser.from('feedback_prompts').select('*');
     if (error) {
       console.error('Error fetching feedback prompts:', {
         browser: browserName,
@@ -195,8 +214,27 @@ test.describe('Admin User Creation', () => {
   });
 
   test("Admin cannot access conversations table", async ({ browserName }) => {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: conversations, error } = await supabase.from('conversations').select('*');
+
+    // sign in as admin
+    const { data: signInData, error: signInError } = await adminUser.auth.signInWithPassword({
+      email: testAdminEmail,
+      password: testAdminPassword,
+    });
+    if (signInError) {
+      console.error('Error signing in:', {
+        browser: browserName,
+        error: signInError
+      });
+      throw new Error(`Failed to sign in: ${signInError.message}`);
+    }
+    console.log('Admin signed in successfully:', {
+      browser: browserName,
+      userId: signInData.user.id,
+      email: signInData.user.email,
+      role: signInData.user.user_metadata?.role
+    });
+    
+    const { data: conversations, error } = await adminUser.from('conversations').select('*');
     if (error) {
       console.error('Error fetching conversations:', {
         browser: browserName,
@@ -205,13 +243,6 @@ test.describe('Admin User Creation', () => {
       throw new Error(`Failed to fetch conversations: ${error.message}`);
     }
     
-    console.log('Conversations access attempt result:', {
-      browser: browserName,
-      data: conversations,
-      dataType: typeof conversations,
-      isArray: Array.isArray(conversations),
-      length: conversations?.length
-    });
 
     // Admin should get an empty array due to RLS policies
     expect(Array.isArray(conversations)).toBe(true);
