@@ -41,6 +41,7 @@ export default function InitChat({ handleStartChat, starterPrompts, handleInputC
               }}
               className="flex flex-col sm:flex-row items-center gap-3">
               <Input
+                data-testid="initiateChatInput"
                 onChange={handleInputChange}
                 className="w-full bg-slate-50 text-[14px] p-4 rounded-full border-none shadow-lg hover:shadow-xl focus:outline-none focus-visible:ring-0 focus:ring-0 placeholder:text-xs placeholder:px-2"
                 placeholder="Start typing..."
@@ -48,6 +49,7 @@ export default function InitChat({ handleStartChat, starterPrompts, handleInputC
               />
 
               <Button
+                data-testid="initiateChatSendButton"
                 type="submit"
                 className="w-full sm:w-auto text-base py-2 px-4 rounded-full whitespace-nowrap flex items-center justify-center text-sm"
                 disabled={!inputMessage}>

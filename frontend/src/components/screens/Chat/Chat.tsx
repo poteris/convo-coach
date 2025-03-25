@@ -15,6 +15,7 @@ import { LogOut, SendHorizontal } from "lucide-react"
 import { ChatInput } from "@/components/ChatInput/ChatInput"
 import { ConversationData, Message } from "../../../../app/chat/[id]/page";
 import { v4 as uuidv4 } from 'uuid';
+import { useParams } from 'next/navigation';
 async function getConversationData(conversationId: string): Promise<ConversationData | null> {
   try {
     const response = await axios.get<ConversationData>(`/api/chat/${conversationId}`);
@@ -50,7 +51,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isEndChatModalOpen, setIsEndChatModalOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const params = useParams();
   const router = useRouter();
 
   useEffect(() => {
@@ -102,7 +103,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
       );
       
       // Once successfully sent, fetch the updated conversation
-      const updatedConversation = await getConversationData(conversationData.id);
+      const updatedConversation = await getConversationData(params.id as string);
       
       if (updatedConversation) {
         setConversationData(updatedConversation);
@@ -131,7 +132,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
 
   const handleConfirmEndChat = () => {
     setIsEndChatModalOpen(false);
-    router.push(`/feedback?conversationId=${conversationData?.id}`);
+    router.push(`/feedback?conversationId=${params.id}`);
   }
 
   return (
@@ -166,6 +167,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
               className="flex-1 grid grid-cols-[1fr_auto] gap-3 w-full max-w-full sm:max-w-3xl lg:max-w-[1045px] lg:min-w-[1045px] "
             >
               <ChatInput
+               
                 ref={inputRef}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
@@ -186,6 +188,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
             </form>
 
             <Button
+              data-testid="endChatButton"
               onClick={handleEndChat}
               className="bg-red-500 text-white hover:bg-red-600"
             >

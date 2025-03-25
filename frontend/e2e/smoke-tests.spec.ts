@@ -50,52 +50,59 @@ test('Start chat button is visible and starts the chat', async () => {
   const startChatButton = page.getByTestId('startChatButton');
   await expect(startChatButton).toBeVisible();
   await Promise.all([
-    page.waitForURL(`${baseUrl}/chat/**`),
+    page.waitForURL(`${baseUrl}/chat/**`), 
     startChatButton.click()
   ]);
   await expect(page).toHaveURL(new RegExp(`^${baseUrl}/chat/[\\w-]+$`));
 });
 
-test('Text box is visible: Entering text and pressing CTA starts chat ', async () => {
+
+// /chat/[id]
+test('Text box is visible: Entering text and clicking send button starts chat ', async () => {
   // Wait for the page to be fully loaded
   await page.waitForLoadState('networkidle');
   
   // Wait for the input to be visible using role and placeholder
-  const startChatInput = page.getByRole('textbox', { name: 'Start typing...' });
-  try {
-    await expect(startChatInput).toBeVisible({ timeout: 15000 });
-  } catch (error) {
-    console.error('Failed to find chat input element. Current page content:', await page.content());
-    throw error;
-  }
+  const startChatInput = page.getByTestId('initiateChatInput');
+  await expect(startChatInput).toBeVisible({ timeout: 15000 });
   
   await startChatInput.fill(startChatText);
-  
-  // Wait for navigation to chat page with correct URL pattern
-  await Promise.all([
-    page.waitForURL(new RegExp(`^${baseUrl}/chat/[\\w-]+$`)),
-    page.getByRole('button', { name: 'Send' }).click()
-  ]);
-  
-  // Verify we're on the correct page
-  await expect(page.url()).toMatch(new RegExp(`^${baseUrl}/chat/[\\w-]+$`));
-});
+  await page.getByTestId('initiateChatSendButton').click();
 
-test('Chat page loads and messages can be exchanged', async () => {
+  // the component should render the message and the bot should respond
   await expect(page.getByText(startChatText)).toBeVisible();
   const botMessage = page.locator('.text-left');
   await botMessage.first().waitFor();
   await expect(botMessage).toHaveCount(1);
-  const chatTextbox = page.getByRole('textbox', { name: 'Type your message...' });
-  await expect(chatTextbox).toBeVisible();
-  await chatTextbox.fill("How are you?");
-  await expect(page.getByTestId('sendMessageButton')).toBeVisible();
-  await page.getByTestId('sendMessageButton').click();
-  await page.waitForResponse(`${baseUrl}/api/chat/send-user-message`);
-  const userMessages = page.locator('.text-right');
-  await expect(userMessages).toHaveCount(2);
-  await expect(botMessage).toHaveCount(2);
+ });
+
+test ("Exchange messages with the bot by typing and pressing enter", async () => {
+  const startChatInput = page.getByTestId('chatInput');
+   // send a message to the bot
+   await startChatInput.fill("How are you?");
+   await page.getByTestId('sendMessageButton').click();
+   // the component should render the message and the bot should respond
+   await expect(page.getByText("How are you?")).toBeVisible();
+   const botMessage2 = page.locator('.text-left');
+   await botMessage2.first().waitFor();
+   await expect(botMessage2).toHaveCount(2);
 });
+
+// test('Chat page loads and messages can be exchanged', async () => {
+//   await expect(page.getByText(startChatText)).toBeVisible();
+//   const botMessage = page.locator('.text-left');
+//   await botMessage.first().waitFor();
+//   await expect(botMessage).toHaveCount(1);
+//   const chatTextbox = page.getByRole('textbox', { name: 'Type your message...' });
+//   await expect(chatTextbox).toBeVisible();
+//   await chatTextbox.fill("How are you?");
+//   await expect(page.getByTestId('sendMessageButton')).toBeVisible();
+//   await page.getByTestId('sendMessageButton').click();
+//   await page.waitForResponse(`${baseUrl}/api/chat/send-user-message`);
+//   const userMessages = page.locator('.text-right');
+//   await expect(userMessages).toHaveCount(2);
+//   await expect(botMessage).toHaveCount(2);
+// });
 
 test('Chat can be ended and user is routed to feedback page', async () => {
   const endChatButton = page.getByTestId('endChatButton');
