@@ -53,6 +53,11 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
 
   const router = useRouter();
 
+  useEffect(() => {
+    console.log('initialConversationData', initialConversationData);
+    console.log('conversationData', conversationData);
+  }, [initialConversationData, conversationData]);
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
