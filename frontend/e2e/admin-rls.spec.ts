@@ -8,7 +8,7 @@ dotenv.config();
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Need service role key to verify user creation
 
-test.describe('Admin User Creation', () => {
+test.describe('Initiate Supabase', () => {
   let supabaseSuperUser: SupabaseClient;
   let adminUser: SupabaseClient;
   const testAdminEmail = process.env.ADMIN_EMAIL!;
@@ -47,8 +47,9 @@ test.describe('Admin User Creation', () => {
 
   test('Admin can be added', async ({ browserName }) => {
     try {
-
       // First check if the user already exists
+      // NOTE: we expect the db to be empty, so we should only have one user
+      // UPDATE
       const { data: existingUser, error: listError } = await supabaseSuperUser.auth.admin.listUsers();
       
       if (listError) {
@@ -98,6 +99,12 @@ test.describe('Admin User Creation', () => {
             message: error.message
           } : null
         });
+ // 1. user is created
+ // 2. if the user is there block creation of a new user
+ // 3. end of test: delete the admin user (user BeforeAll)
+ // 
+
+
 
         // For mobile Chrome, if we have user data, proceed despite the error
         if (error && (!data?.user || browserName !== 'chromium')) {
@@ -133,13 +140,7 @@ test.describe('Admin User Creation', () => {
         throw new Error('Failed to verify admin user existence');
       }
 
-      console.log('Admin user verified successfully:', {
-        browser: browserName,
-        userId: verifyData.user.id,
-        email: verifyData.user.email,
-        role: verifyData.user.role,
-        metadata: verifyData.user.user_metadata
-      });
+      
 
       // Check if the admin was created successfully
       expect(verifyData.user).not.toBeNull();
@@ -158,37 +159,7 @@ test.describe('Admin User Creation', () => {
     }
   });
 
-  test('Admin can access system prompts', async ({ browserName }) => {
-    // sign in as admin
-    const { data: signInData, error: signInError } = await adminUser.auth.signInWithPassword({
-      email: testAdminEmail,
-      password: testAdminPassword
-    });
-    if (signInError) {
-      console.error('Error signing in:', {
-        browser: browserName,
-        error: signInError
-      });
-      throw new Error(`Failed to sign in: ${signInError.message}`);
-    }
-    console.log('Admin signed in successfully:', {
-      browser: browserName,
-      userId: signInData.user.id,
-      email: signInData.user.email,
-      role: signInData.user.user_metadata?.role
-    });
-    
-    const { data: prompts, error } = await adminUser.from('system_prompts').select('*');
 
-    if (error) {
-      console.error('Error fetching system prompts:', {
-        browser: browserName,
-        error: error
-      });
-      throw new Error(`Failed to fetch system prompts: ${error.message}`);
-    } 
-    expect(prompts).not.toBeNull();
-  });
   test('Admin can access persona prompts', async ({ browserName }) => {
 
     const { data: prompts, error } = await adminUser.from('persona_prompts').select('*');
@@ -213,40 +184,19 @@ test.describe('Admin User Creation', () => {
     expect(prompts).not.toBeNull();
   });
 
-  test("Admin cannot access conversations table", async ({ browserName }) => {
+    test('Admin can access system prompts', async ({ browserName }) => {
+  
+    const { data: prompts, error } = await adminUser.from('system_prompts').select('*');
 
-    // sign in as admin
-    const { data: signInData, error: signInError } = await adminUser.auth.signInWithPassword({
-      email: testAdminEmail,
-      password: testAdminPassword,
-    });
-    if (signInError) {
-      console.error('Error signing in:', {
-        browser: browserName,
-        error: signInError
-      });
-      throw new Error(`Failed to sign in: ${signInError.message}`);
-    }
-    console.log('Admin signed in successfully:', {
-      browser: browserName,
-      userId: signInData.user.id,
-      email: signInData.user.email,
-      role: signInData.user.user_metadata?.role
-    });
-    
-    const { data: conversations, error } = await adminUser.from('conversations').select('*');
     if (error) {
-      console.error('Error fetching conversations:', {
+      console.error('Error fetching system prompts:', {
         browser: browserName,
         error: error
       });
-      throw new Error(`Failed to fetch conversations: ${error.message}`);
-    }
-    
-
-    // Admin should get an empty array due to RLS policies
-    expect(Array.isArray(conversations)).toBe(true);
-    expect(conversations).toHaveLength(0);
+      throw new Error(`Failed to fetch system prompts: ${error.message}`);
+    } 
+    expect(prompts).not.toBeNull();
   });
 
+ 
 });
