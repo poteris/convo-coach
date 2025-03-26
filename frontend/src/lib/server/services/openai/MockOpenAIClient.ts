@@ -1,5 +1,4 @@
 import { AIClientInterface } from './AIClientInterface';
-import { v4 as uuidv4 } from 'uuid';
 import { ChatCompletionRequest, ChatCompletionResponse } from './ChatCompletionTypes';
 
 export class MockOpenAIClient implements AIClientInterface {
@@ -14,7 +13,6 @@ export class MockOpenAIClient implements AIClientInterface {
               function: {
                 name: "generate_persona",
                 arguments: JSON.stringify({
-                  id: uuidv4(),
                   name: "John Doe",
                   segment: "Young Slacker",
                   age: 30,
