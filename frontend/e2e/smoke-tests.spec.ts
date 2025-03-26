@@ -20,6 +20,12 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
       console.log('Location:', msg.location());
     });
   }
+  if (process.env.USE_MOCK_OPENAI === 'true') {
+    console.log('Executing tests using Mock OpenAI API');
+  } else {
+    console.warn('*** Executing tests using Open AI API. Refer to README for mock API usage ***');
+  }
+
 });
 
 test('Landing page loads and the call to action button starts the user journey for member recruitment', async () => {
