@@ -1,5 +1,5 @@
 import { generateNewPersona as newPersona } from "@/lib/server/services/persona/generateNewPersona";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const personaSchema = z.object({
@@ -18,9 +18,9 @@ const personaSchema = z.object({
   emotional_conditions: z.string(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const persona = await newPersona();
+    const persona = await newPersona(request.headers);
 
     personaSchema.parse(persona); // will throw an error if the persona does not match the schema
 

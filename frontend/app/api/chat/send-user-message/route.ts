@@ -19,7 +19,7 @@ const sendUserMessageRequestSchema = z.object({
 });
 
 
-async function sendMessage({ conversationId, content }: { conversationId: string; content: string; scenarioId?: string }) {
+async function sendMessage(headers: Headers, { conversationId, content }: { conversationId: string; content: string; scenarioId?: string }) {
   try {
     // Get conversation context
     const { persona, scenario, systemPrompt } = await getConversationContext(conversationId);
@@ -55,7 +55,7 @@ async function sendMessage({ conversationId, content }: { conversationId: string
       }
     ];
 
-    const aiResponse: string | null = await getAIResponse(messages);
+    const aiResponse: string | null = await getAIResponse(messages, headers);
     if (aiResponse) {
       await saveMessages(conversationId, content, aiResponse);
     }
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     const parsedBody = sendUserMessageRequestSchema.parse(body);
 
-    const { content } = await sendMessage(parsedBody);
+    const { content } = await sendMessage(req.headers as Headers, parsedBody);
 
     if (!content) {
       console.error("Error invoking assistant function:");
