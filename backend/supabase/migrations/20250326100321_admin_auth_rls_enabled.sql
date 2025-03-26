@@ -95,8 +95,6 @@ CREATE TABLE feedback_prompts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE feedback_prompts ENABLE ROW LEVEL SECURITY;
-
 -- Conversations table
 CREATE TABLE public.conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
