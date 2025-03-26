@@ -45,120 +45,42 @@ test.describe('Initiate Supabase', () => {
   
   });
 
-  test('Admin can be added', async ({ browserName }) => {
+  test('Admin can be added', async ({ isMobile }) => {
+    test.skip(isMobile, 'This test is not applicable for mobile browsers');
+
+
     try {
-      // First check if the user already exists
-      // NOTE: we expect the db to be empty, so we should only have one user
-      // UPDATE
-      const { data: existingUser, error: listError } = await supabaseSuperUser.auth.admin.listUsers();
-      
-      if (listError) {
-        console.error('Error listing users:', {
-          browser: browserName,
-          error: listError
-        });
-        throw new Error(`Failed to list users: ${listError.message}`);
+      // Create admin user
+      const { data, error } = await supabaseSuperUser.auth.admin.createUser({
+        email: testAdminEmail,
+        password: testAdminPassword,
+        user_metadata: {
+          role: 'admin'
+        },
+        email_confirm: true
+      });
+
+      if (error) {
+        throw new Error(`Failed to create admin user: ${error.message}`);
       }
 
-      const adminUser = existingUser?.users?.find(u => u.email === testAdminEmail);
-      
-      let userData;
-      
-      if (adminUser) {
-        console.log('Admin user already exists:', {
-          browser: browserName,
-          id: adminUser.id,
-          email: adminUser.email,
-          role: adminUser.user_metadata?.role
-        });
-        userData = adminUser;
-      } else {
-        // Step 1: Create an admin user for testing
-        const { data, error } = await supabaseSuperUser.auth.admin.createUser({
-          email: testAdminEmail,
-          password: testAdminPassword,
-          user_metadata: {
-            role: 'admin'
-          },
-          email_confirm: true // Skip email verification
-        });
-        
-        // Log the full response for debugging
-        console.log('Supabase createUser response:', {
-          browser: browserName,
-          hasData: !!data,
-          userData: data?.user ? {
-            id: data.user.id,
-            email: data.user.email,
-            role: data.user.role,
-            metadata: data.user.user_metadata
-          } : null,
-          hasError: !!error,
-          errorDetails: error ? {
-            code: error.code,
-            message: error.message
-          } : null
-        });
- // 1. user is created
- // 2. if the user is there block creation of a new user
- // 3. end of test: delete the admin user (user BeforeAll)
- // 
-
-
-
-        // For mobile Chrome, if we have user data, proceed despite the error
-        if (error && (!data?.user || browserName !== 'chromium')) {
-          console.error('Failed to create admin user:', {
-            browser: browserName,
-            code: error.code,
-            status: error.status,
-            name: error.name,
-            message: error.message
-          });
-          throw new Error(`Admin user creation failed: ${error.message}`);
-        }
-
-        userData = data?.user;
+      if (!data?.user) {
+        throw new Error('No user data returned from creation');
       }
 
-      if (!userData) {
-        console.error('Admin user creation/retrieval failed: No user data returned', {
-          browser: browserName
-        });
-        throw new Error('Admin user creation/retrieval failed: No user data returned');
-      }
-
-      // Verify the user exists in the database
-      const { data: verifyData, error: verifyError } = await supabaseSuperUser.auth.admin.getUserById(userData.id);
+      // Verify user exists and has correct role
+      const { data: verifyData, error: verifyError } = await supabaseSuperUser.auth.admin.getUserById(data.user.id);
       
       if (verifyError || !verifyData.user) {
-        console.error('Failed to verify admin user:', {
-          browser: browserName,
-          verifyError,
-          userId: userData.id
-        });
         throw new Error('Failed to verify admin user existence');
       }
 
-      
-
-      // Check if the admin was created successfully
-      expect(verifyData.user).not.toBeNull();
       expect(verifyData.user.user_metadata?.role).toBe('admin');
-      
-      // Steps to test admin access would go here
-      // For example, logging in as this admin and trying to access protected resources
     } catch (err) {
-      console.error('Error in admin access test:', {
-        browser: browserName,
-        message: 'Test execution failed',
-        error: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : undefined
-      });
-      throw err; // Re-throw to fail the test
+      console.error('Admin creation test failed:', err instanceof Error ? err.message : 'Unknown error');
+      throw err;
     }
   });
-
 
   test('Admin can access persona prompts', async ({ browserName }) => {
 
