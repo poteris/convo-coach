@@ -5,7 +5,7 @@ dotenv.config({ path: '../.env' });
 import { createClient } from '@supabase/supabase-js';
 
 
-async function handleExistingAdminUsers(supabase, targetEmail) {
+export async function handleExistingAdminUsers(supabase, targetEmail) {
   const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
   
   if (listError) {
