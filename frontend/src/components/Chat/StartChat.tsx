@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Persona } from "@/types/persona";
-import { TrainingScenario } from "@/types/scenarios";
 import ChatComponent from "../screens/Chat/Chat";
 import InitChat from "./InitChat";
 import { Message, ConversationData } from "../../../app/chat/[id]/page";
@@ -130,7 +129,7 @@ const StartChat: React.FC<StartChatProps> = ({ chatData }) => {
   return (
     <>
       {messages && messages.length > 0 ? (
-        <ChatComponent conversationData={conversationData} />
+        <ChatComponent conversationData={conversationData!} />
       ) : (
         <InitChat handleStartChat={handleStartChat} starterPrompts={PROMPTS} handleInputChange={handleInputChange} inputMessage={inputMessage} />
       )}

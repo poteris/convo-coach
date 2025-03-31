@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { retrievePersona } from "@/lib/server/db";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const id = (await params).id;
         const persona = await retrievePersona(id);
