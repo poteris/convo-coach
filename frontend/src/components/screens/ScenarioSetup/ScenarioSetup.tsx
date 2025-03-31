@@ -72,14 +72,15 @@ async function generatePersona() {
 }
 
 
-async function startChat( initialMessage: string, scenarioId: string, persona: Persona ) {
-    const response = await axios.post<{ id: string }>("/api/chat/initialise-chat", {
+async function startChat( initialMessage: string, scenarioId: string, persona: Persona ): Promise<string> {
+    const response = await axios.post<string>("/api/chat/initialise-chat", {
         userId: uuidv4(),
         scenarioId,
         persona,
       });
-      console.log("response", response.data.id);
-      return response.data.id;
+
+      console.log("response", response.data);
+      return response.data;
 }
 
 export default function ScenarioSetup({ scenarioId }: ScenarioSetupComponentProps) {
@@ -132,7 +133,7 @@ export default function ScenarioSetup({ scenarioId }: ScenarioSetupComponentProp
     async function handleStartChat() {
         if (!selectedScenario || !persona) return;
         try {
-            const { id: conversationId } = await startChat(uuidv4(), scenarioId, persona);
+            const conversationId = await startChat(uuidv4(), scenarioId, persona);
             router.push(`/chat/${conversationId}`);
         } catch (error) {
             console.error('Error starting chat:', error);

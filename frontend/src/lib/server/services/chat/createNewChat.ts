@@ -1,28 +1,58 @@
 'use server'
-import { Persona } from "@/types/persona";
+import { Persona, personaSchema } from "@/types/persona";
 import { getConversationContext, getSystemPrompt, saveMessages, upsertPersona, insertConversation} from "@/lib/server/db";
 import { createBasePromptForMessage, getAIResponse} from "@/lib/server/llm";
 import OpenAI from "openai";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 
+
+const InitialiseChatInputSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  scenarioId: z.string().min(1, "Scenario ID is required"),
+  persona: personaSchema,
+  systemPromptId: z.number().optional().default(1),
+});
+
+const InitialiseChatResponseSchema = z.object({
+  id: z.string(),
+});
+
+type InitialiseChatResponse = z.infer<typeof InitialiseChatResponseSchema>;
 
 export async function initialiseChat(
   userId: string,
   scenarioId: string,
   persona: Persona,
-  systemPromptId = 1) {
+  systemPromptId = 1
+): Promise<InitialiseChatResponse> {
   try {
-    if (!userId || !scenarioId || !persona) {
-      throw new Error("Missing userId, scenarioId, or persona");
-    }
+    const validatedInput = InitialiseChatInputSchema.parse({
+      userId,
+      scenarioId,
+      persona,
+      systemPromptId,
+    });
 
-    await upsertPersona(persona);
+    await upsertPersona(validatedInput.persona);
 
-    const id = await insertConversation(uuidv4(), userId, scenarioId, persona.id, systemPromptId);
-    console.log("INSERTED CONVERSATION", id);
-    return { id };
+    const id = await insertConversation(
+      uuidv4(),
+      validatedInput.userId,
+      validatedInput.scenarioId,
+      validatedInput.persona.id,
+      validatedInput.systemPromptId
+    );
+
+    // Validate response
+    const response = InitialiseChatResponseSchema.parse({ id });
+    return response;
   } catch (error) {
-    console.error("Error in initialiseChat:", error);
+    if (error instanceof z.ZodError) {
+      console.error("Validation error in initialiseChat:", error.errors);
+    } else {
+      console.error("Error in initialiseChat:", error);
+    }
     throw new Error("Failed to initialise chat");
   }
 }
