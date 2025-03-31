@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { useRouter } from "next/navigation";
+import { useRouter, useParams} from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,6 @@ import { LogOut, SendHorizontal } from "lucide-react"
 import { ChatInput } from "@/components/ChatInput/ChatInput"
 import { ConversationData, Message } from "../../../../app/chat/[id]/page";
 import { v4 as uuidv4 } from 'uuid';
-import { useParams } from 'next/navigation';
 async function getConversationData(conversationId: string): Promise<ConversationData | null> {
   try {
     const response = await axios.get<ConversationData>(`/api/chat/${conversationId}`);

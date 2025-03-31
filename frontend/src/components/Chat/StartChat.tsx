@@ -60,7 +60,6 @@ async function sendUserMessage(conversationId: string, content: string, scenario
       content,
       scenario_id: scenarioId
     });
-    console.log("SEND USER MESSAGE RESPONSE", response);
     return response.data;
   } catch (error) {
     console.error('Error sending message:', error);

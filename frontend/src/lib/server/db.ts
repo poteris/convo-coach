@@ -152,7 +152,6 @@ export async function insertConversation(
     system_prompt_id: systemPromptId,
   }).select("id").single();
 
-  console.log("INSERTED CONVERSATION", data);
 
   if (error) {
     console.error("Error inserting conversation:", error);

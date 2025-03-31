@@ -79,7 +79,6 @@ async function startChat( initialMessage: string, scenarioId: string, persona: P
         persona,
       });
 
-      console.log("response", response.data);
       return response.data;
 }
 

@@ -31,7 +31,6 @@ interface Message {
 // TODO rename to getConversationDataWithMessages
 async function getConversationDataById(id: string) {
     try {
-        console.log("GETTING CONVERSATION DATA USING CHAT ID", id);
         const { data: chatData, error: chatDataError } = await supabase.from("conversations").select("conversation_id, scenario_id, user_id, persona_id, system_prompt_id, feedback_prompt_id").eq("id", id).single();
         if (chatDataError) {
             console.error("Error fetching chat data:", chatDataError);

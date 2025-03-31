@@ -19,7 +19,6 @@ export async function getFeedbackPrompt(conversationId: string): Promise<string>
         `Error fetching data: ${conversationResult.error?.message || feedbackPromptResult.error?.message}`
       );
     }
-    // console.log("conversationResult", conversationResult.data);
 
     const conversation = await conversationDataSchema.parse(conversationResult);
     const feedbackPrompt = await feedbackPromptResult.data as FeedbackPrompt;
