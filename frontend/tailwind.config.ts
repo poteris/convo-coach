@@ -10,23 +10,24 @@ const config: Config = {
   	extend: {
   		colors: {
   			pcsprimary: {
-  				'01': 'var(--pcsprimary-01)',
-  				'02': 'var(--pcsprimary-02)',
-  				'03': 'var(--pcsprimary-03)',
-  				'04': 'var(--pcsprimary-04)',
-  				'05': 'var(--pcsprimary-05)',
-  				'06': 'var(--pcsprimary-06)',
-  				'01-light': 'var(--pcsprimary01-light)'
+  				'01': 'hsl(var(--pcsprimary-01))',
+  				'02': 'hsl(var(--pcsprimary-02))',
+  				'03': 'hsl(var(--pcsprimary-03))',
+  				'04': 'hsl(var(--pcsprimary-04))',
+  				'05': 'hsl(var(--pcsprimary-05))',
+  				'06': 'hsl(var(--pcsprimary-06))',
+  				'07': 'hsl(var(--pcsprimary-07))',
+  				'01-light': 'hsl(var(--pcsprimary01-light))'
   			},
   			pcssecondary: {
-  				'01': 'var(--pcssecondary-01)',
-  				'02': 'var(--pcssecondary-02)',
-  				'03': 'var(--pcssecondary-03)',
-  				'04': 'var(--pcssecondary-04)',
-  				'05': 'var(--pcssecondary-05)',
-  				'06': 'var(--pcssecondary-06)',
-  				'07': 'var(--pcssecondary-07)',
-  				'08': 'var(--pcssecondary-08)'
+  				'01': 'hsl(var(--pcssecondary-01))',
+  				'02': 'hsl(var(--pcssecondary-02))',
+  				'03': 'hsl(var(--pcssecondary-03))',
+  				'04': 'hsl(var(--pcssecondary-04))',
+  				'05': 'hsl(var(--pcssecondary-05))',
+  				'06': 'hsl(var(--pcssecondary-06))',
+  				'07': 'hsl(var(--pcssecondary-07))',
+  				'08': 'hsl(var(--pcssecondary-08))'
   			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -42,7 +43,7 @@ const config: Config = {
   				foreground: 'hsl(var(--popover-foreground))'
   			},
   			primary: {
-  				DEFAULT: 'hsl(var(--pcsprimary-02))',
+  				DEFAULT: 'hsl(var(--pcsprimary-01))',
   				foreground: 'hsl(var(--primary-foreground))',
   				light: 'hsl(var(--pcsprimary01-light))'
   			},
