@@ -140,7 +140,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
             <div
               className={`inline-block p-4 rounded-[16px] text-sm max-w-[600px] break-words relative ${
                 m.role === "user"
-                  ? "bg-slate-50 text-black tail-user"
+                  ? "bg-pcsprimary-07 text-black tail-user"
                   : "bg-primary text-white tail-assistant"
               }`}
             >

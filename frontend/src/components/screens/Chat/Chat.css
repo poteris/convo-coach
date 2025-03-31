@@ -6,7 +6,7 @@
     width: 26px;
     height: 26px;
     clip-path: polygon(0 100%,0 0,100% 100%);
-    background: hsla(188, 100%, 97%, 1);
+    background: hsl(var(--pcsprimary-07));
   }
 
 .tail-assistant::before {
@@ -18,5 +18,5 @@
     height: 26px;
     aspect-ratio: 1;
     clip-path: polygon(0 100%,100% 0,100% 100%);
-    background: hsla(219, 72%, 33%);
+    background: hsl(var(--pcsprimary-01));
   }
