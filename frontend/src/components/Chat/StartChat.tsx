@@ -12,8 +12,7 @@ import { Message, ConversationData } from "../../../app/chat/[id]/page";
 const PROMPTS = [
   "Hi, can I interrupt you for a sec?",
   "Hey, how are you doing?",
-  "Hey mate, sorry to bother you - how's it going?",
-];
+  "Hey mate, sorry to bother you - how's it going?"];
 
 interface CreateNewChatRequest {
   userId: string;

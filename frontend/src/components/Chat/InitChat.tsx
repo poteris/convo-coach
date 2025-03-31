@@ -22,16 +22,16 @@ export default function InitChat({ handleStartChat, starterPrompts, handleInputC
      
         <div className="w-full flex-grow flex flex-col justify-between py-4 md:py-8">
           
-            <div className="flex flex-col items-center">
-              <Image
-                width={200}
-                height={200}
-                alt="Union Training Bot"
-                src="/images/chat-bot.svg"
-                className=" w-[150px] md:w-[250px]"
-                priority
-              />
-            </div>
+        <div className="absolute inset-0 flex justify-center items-center pointer-events-none -mt-16 md:mt-0">
+          <Image
+            width={200}
+            height={200}
+            alt="Union Training Bot"
+            src="/images/chat-bot.svg"
+            className="w-[150px] md:w-[250px]"
+            priority
+          />
+        </div>
           
           <div className="mt-auto">
             <form

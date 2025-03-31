@@ -84,13 +84,13 @@ export default function ChatPage() {
     // Show loading state
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
+            <div className="absolute inset-0 flex justify-center items-center pointer-events-none -mt-16 md:mt-0">
                 <Image
                     width={200}
                     height={200}
                     alt="Union Training Bot"
                     src="/images/chat-bot.svg"
-                    className="mb-6 md:mb-8 w-[150px] md:w-[250px]"
+                    className="w-[150px] md:w-[250px]"
                     priority
                 />
             </div>

@@ -54,10 +54,6 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
   const params = useParams();
   const router = useRouter();
 
-  useEffect(() => {
-    console.log('initialConversationData', initialConversationData);
-    console.log('conversationData', conversationData);
-  }, [initialConversationData, conversationData]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -110,9 +106,8 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
       }
       
       setInputMessage('');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error sending message:', error);
-      // Show error to the user (could implement a toast notification here)
     } finally {
       setIsLoading(false);
       // Refocus input after sending message
@@ -136,7 +131,7 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
   }
 
   return (
-    <div className=" w-full max-w-full sm:max-w-3xl lg:max-w-[1045px] lg:min-w-[1045px] mx-auto p-4 pb-32">
+    <div className="max-w-[1045px] mx-auto p-4 pb-32">
       {/* Messages Container */}
       <div className="mb-4">
         {conversationData?.messages.map((m) => (
@@ -156,15 +151,15 @@ const ChatComponent = ({ conversationData: initialConversationData }: ChatCompon
       </div>
 
       {/* Input Container */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white max-w-[1200px] mx-auto">
-        <div className="max-w-[1200px] mx-auto p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white max-w-[1045px] mx-auto">
+        <div className=" mx-auto p-4">
           <div className="flex gap-3">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSendMessage();
               }}
-              className="flex-1 grid grid-cols-[1fr_auto] gap-3 w-full max-w-full sm:max-w-3xl lg:max-w-[1045px] lg:min-w-[1045px] "
+              className="flex-1 grid grid-cols-[1fr_auto] gap-3"
             >
               <ChatInput
                
