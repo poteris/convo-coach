@@ -42,25 +42,6 @@ export async function createNewChat({ initialMessage, scenarioId, persona }: Cre
   }
 }
 
-async function getScenario(scenarioId: string) {
-  try {
-    const response = await axios.get<TrainingScenario>(`/api/scenarios/${scenarioId}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching scenario:", error);
-    throw error;
-  }
-}
-
-async function getPersona(personaId: string) {
-  try {
-    const response = await axios.get<Persona>(`/api/persona/${personaId}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching persona:", error);
-    throw error;
-  }
-}
 
 async function getConversation(conversationId: string) {
   try {
@@ -96,7 +77,6 @@ interface StartChatProps {
 const StartChat: React.FC<StartChatProps> = ({ chatData }) => {
   const [inputMessage, setInputMessage] = useState("");
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [conversationData, setConversationData] = useState<ConversationData | null>(chatData);
   const [messages, setMessages] = useState<Message[] | null>(chatData?.messages || null);
 
@@ -113,7 +93,6 @@ const StartChat: React.FC<StartChatProps> = ({ chatData }) => {
     if (!conversationData) return;
 
     try {
-      setLoading(true);
 
       if (!message?.trim()) {
         console.error("Message is missing.");
@@ -133,9 +112,7 @@ const StartChat: React.FC<StartChatProps> = ({ chatData }) => {
 
     } catch (error: unknown) {
       console.error("Error starting conversation:", error instanceof Error ? error.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const handleStartChat = async (prompt?: string) => {
