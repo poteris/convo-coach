@@ -6,7 +6,9 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error("Missing Supabase environment variables");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  db: { schema: process.env.SUPABASE_SCHEMA || 'public' }
+});
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error("Missing OpenAI API key");
