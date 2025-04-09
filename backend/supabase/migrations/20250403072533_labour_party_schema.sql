@@ -116,7 +116,6 @@ GRANT ALL ON labour_party.scenario_prompts TO authenticated;
 GRANT ALL ON labour_party.persona_prompts TO authenticated;
 
 -- Update grants for sequences
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA labour_party TO authenticated;
 
 -- Finally, grant usage to the schema
