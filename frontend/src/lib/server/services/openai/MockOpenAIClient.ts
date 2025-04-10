@@ -40,7 +40,7 @@ export class MockOpenAIClient implements AIClientInterface {
               function: {
                 name: "generate_feedback",
                 arguments: JSON.stringify({
-                  score: 5,
+                  score: 3,
                   summary: "Great performance!",
                   strengths: [
                     { title: "Good listener", description: "You listened well." },
