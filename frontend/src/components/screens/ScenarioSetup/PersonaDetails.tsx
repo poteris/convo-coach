@@ -69,7 +69,7 @@ const PersonaDetailsComponent: React.FC<PersonaDetailsComponentProps> = ({
                   </section>
 
                   <section>
-                    <h4 className="font-semibold text-base md:text-lg mb-2">Union Perspective</h4>
+                    <h4 className="font-semibold text-base md:text-lg mb-2">Labour Perspective</h4>
                     <p className="leading-relaxed">{persona.emotional_conditions}</p>
                   </section>
                 </div>
