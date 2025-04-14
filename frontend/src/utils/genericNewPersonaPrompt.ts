@@ -61,4 +61,4 @@ Personality traits: {{personality_traits}}
 Emotional conditions for supporting labour: {{emotional_conditions}}
 Busyness Level: {{busyness_level}}
 
-IMPORTANT: to select a segment for the persona, follow these instructions: Work out the current epoch time, modulo 4. If the result is 0, the segment is Loyal Nationalist. If the result is 1, the segment is Disengaged Battler. If the result is 2, the segment is Disengaged Traditionalist. If the result is 3, pick any one of the other segments in the list.`;
+IMPORTANT: TO SELECT A SEGMENT FOR THE PERSONA, FOLLOW THESE INSTRUCTIONS: WORK OUT THE CURRENT EPOCH TIME, MODULO 4. IF THE RESULT IS 0, THE SEGMENT FOR THE GENERATED PERSONA IS LOYAL NATIONALIST. IF THE RESULT IS 1, THE SEGMENT IS DISENGAGED BATTLER. IF THE RESULT IS 2, THE SEGMENT IS DISENGAGED TRADITIONALIST. IF THE RESULT IS 3, PICK ANY ONE OF THE OTHER SEGMENTS, FROM THE LIST OF SEGMENT DEFINITIONS ABOVE.`;
