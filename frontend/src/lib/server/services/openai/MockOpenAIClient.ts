@@ -25,6 +25,8 @@ export class MockOpenAIClient implements AIClientInterface {
                   major_issues_in_workplace: "Staff turnover",
                   personality_traits: "helpful, curious",
                   emotional_conditions: "worried about not much",
+                  location: "London",
+                  major_issues: "Brexit",
                 }),
               },
             }],
