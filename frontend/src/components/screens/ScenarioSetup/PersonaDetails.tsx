@@ -53,7 +53,6 @@ const PersonaDetailsComponent: React.FC<PersonaDetailsComponentProps> = ({
                           <li>Workplace Role: {persona.job}</li>
                           <li>Busyness Level: {persona.busyness_level}</li>
                           <li>Political Affiliation: {persona.uk_party_affiliation}</li>
-                          <li>Major Issues: {persona.major_issues}</li>
                         </ul>
                       </section>
 
