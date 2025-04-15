@@ -11,18 +11,11 @@ interface PersonaDetailsComponentProps {
   isRegenerating?: boolean;
 }
 
-
-
-
 const PersonaDetailsComponent: React.FC<PersonaDetailsComponentProps> = ({ 
   persona, 
   onRegeneratePersona,
   isRegenerating = false
 }) => {
-  if (!persona) {
-    return <div>No persona data available</div>;
-  }
-
   return (
     <div className="border-none rounded-[16px] md:rounded-[20px] bg-card p-2 bg-card-alt shadow-md">
       <Accordion type="single" collapsible defaultValue="persona" className="mb-2 md:mb-6">
@@ -31,48 +24,56 @@ const PersonaDetailsComponent: React.FC<PersonaDetailsComponentProps> = ({
             Who you&apos;ll be talking to 
           </AccordionTrigger>
           <AccordionContent className="p-2 md:p-4">
-            {isRegenerating ? (
+            {!persona && (
+            <div className="pb-4 text-red-500">No persona data available. Please try regenerating the persona.</div>
+            )}
+
+            {isRegenerating || !persona ? (
               <PersonaDetailsSkeleton />
             ) : (
               <div className="bg-card-alt">
-                <h3 className="font-semibold text-lg md:text-lg text-gray-900 mb-4 md:mb-6">
-                  {persona.name}
-                </h3>
+                {persona && (
+                  <>
+                    <h3 className="font-semibold text-lg md:text-lg text-gray-900 mb-4 md:mb-6">
+                      {persona.name}
+                    </h3>
 
-                <div className="space-y-4 md:space-y-6 text-gray-700 text-sm md:text-base">
-                  <section>
-                    <h4 className="font-semibold text-base md:text-lg mb-2">Personal Background</h4>
-                    <p className="leading-relaxed">
-                      {persona.name} is a {persona.age}-year-old {persona.gender} who works as a {persona.job} at {persona.workplace}.
-                      They&apos;re {persona.family_status} and are segmented as a {persona.segment}.
-                    </p>
-                  </section>
+                    <div className="space-y-4 md:space-y-6 text-gray-700 text-sm md:text-base">
+                      <section>
+                        <h4 className="font-semibold text-base md:text-lg mb-2">Personal Background</h4>
+                        <p className="leading-relaxed">
+                          {persona.name} is a {persona.age}-year-old {persona.gender} who works as a {persona.job} at {persona.workplace}.
+                          They&apos;re {persona.family_status} and are segmented as a {persona.segment}.
+                        </p>
+                      </section>
 
-                  <section>
-                    <h4 className="font-semibold text-base md:text-lg mb-2">Work & Political Context</h4>
-                    <ul className="list-disc pl-4 md:pl-6 space-y-1">
-                      <li>Workplace Role: {persona.job}</li>
-                      <li>Busyness Level: {persona.busyness_level}</li>
-                      <li>Political Affiliation: {persona.uk_party_affiliation}</li>
-                    </ul>
-                  </section>
+                      <section>
+                        <h4 className="font-semibold text-base md:text-lg mb-2">Work & Political Context</h4>
+                        <ul className="list-disc pl-4 md:pl-6 space-y-1">
+                          <li>Workplace Role: {persona.job}</li>
+                          <li>Busyness Level: {persona.busyness_level}</li>
+                          <li>Political Affiliation: {persona.uk_party_affiliation}</li>
+                        </ul>
+                      </section>
 
-                  <section>
-                    <h4 className="font-semibold text-base md:text-lg mb-2">Personality & Workplace Issues</h4>
-                    <p className="mb-2 normal-case leading-relaxed">
-                      {persona.name}&apos;s personality can be characterised as {persona.personality_traits}.
-                    </p>
-                    <div>
-                      <h5 className="font-medium mb-1">Major workplace issues:</h5>
-                      <p className="leading-relaxed">{persona.major_issues_in_workplace}</p>
+                      <section>
+                        <h4 className="font-semibold text-base md:text-lg mb-2">Personality & Workplace Issues</h4>
+                        <p className="mb-2 normal-case leading-relaxed">
+                          {persona.name}&apos;s personality can be characterised as {persona.personality_traits}.
+                        </p>
+                        <div>
+                          <h5 className="font-medium mb-1">Major workplace issues:</h5>
+                          <p className="leading-relaxed">{persona.major_issues_in_workplace}</p>
+                        </div>
+                      </section>
+
+                      <section>
+                        <h4 className="font-semibold text-base md:text-lg mb-2">Labour Perspective</h4>
+                        <p className="leading-relaxed">{persona.emotional_conditions}</p>
+                      </section>
                     </div>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-base md:text-lg mb-2">Labour Perspective</h4>
-                    <p className="leading-relaxed">{persona.emotional_conditions}</p>
-                  </section>
-                </div>
+                  </>
+                )}
               </div>
             )}
           </AccordionContent>
