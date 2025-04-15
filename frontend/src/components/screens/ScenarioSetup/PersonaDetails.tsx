@@ -42,7 +42,7 @@ const PersonaDetailsComponent: React.FC<PersonaDetailsComponentProps> = ({
                       <section>
                         <h4 className="font-semibold text-base md:text-lg mb-2">Personal Background</h4>
                         <p className="leading-relaxed">
-                          {persona.name} is a {persona.age}-year-old {persona.gender} who works as a {persona.job} at {persona.workplace}.
+                          {persona.name} is a {persona.age}-year-old {persona.gender} who lives in {persona.location} and works as a {persona.job}.
                           They&apos;re {persona.family_status} and are segmented as a {persona.segment}.
                         </p>
                       </section>
@@ -53,17 +53,18 @@ const PersonaDetailsComponent: React.FC<PersonaDetailsComponentProps> = ({
                           <li>Workplace Role: {persona.job}</li>
                           <li>Busyness Level: {persona.busyness_level}</li>
                           <li>Political Affiliation: {persona.uk_party_affiliation}</li>
+                          <li>Major Issues: {persona.major_issues}</li>
                         </ul>
                       </section>
 
                       <section>
-                        <h4 className="font-semibold text-base md:text-lg mb-2">Personality & Workplace Issues</h4>
+                        <h4 className="font-semibold text-base md:text-lg mb-2">Personality & Political Issues</h4>
                         <p className="mb-2 normal-case leading-relaxed">
                           {persona.name}&apos;s personality can be characterised as {persona.personality_traits}.
                         </p>
                         <div>
-                          <h5 className="font-medium mb-1">Major workplace issues:</h5>
-                          <p className="leading-relaxed">{persona.major_issues_in_workplace}</p>
+                          <h5 className="font-medium mb-1">Major political issues:</h5>
+                          <p className="leading-relaxed">{persona.major_issues}</p>
                         </div>
                       </section>
 
