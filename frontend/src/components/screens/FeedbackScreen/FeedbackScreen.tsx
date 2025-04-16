@@ -1,5 +1,5 @@
 import React from "react";
-import { X, CheckCircle, AlertCircle } from "lucide-react";
+import { X, CheckCircle, AlertCircle, CircleArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {useState, useEffect } from "react";
 import axios from "axios";
@@ -97,7 +97,7 @@ export const FeedbackPopover: React.FC<FeedbackPopoverProps> = ({
                       <h3 className="text-lg font-bold mb-4 text-gray-900 ">Strengths</h3>
                       {feedbackData.strengths.map((strength, index) => (
                         <div key={index} className="mb-4 flex">
-                          <CheckCircle className="text-green-500 mr-2 flex-shrink-0" size={20} />
+                          <CheckCircle className="text-green-500 mr-2 flex-shrink-0 mt-0.5" size={20} />
                           <div>
                             <h4 className="font-semibold mb-1 text-gray-900 ">{strength.title}</h4>
                             <p className="text-gray-600 ">{strength.description}</p>
@@ -106,17 +106,26 @@ export const FeedbackPopover: React.FC<FeedbackPopoverProps> = ({
                       ))}
                     </div>
 
-                    <div>
+                    <div className="mb-6">
                       <h3 className="text-lg font-bold mb-4 text-gray-900 ">Areas for Improvement</h3>
                       {feedbackData.areas_for_improvement.map((area, index) => (
                         <div key={index} className="mb-4 flex">
-                          <AlertCircle className="text-orange-500 mr-2 flex-shrink-0" size={20} />
+                          <AlertCircle className="text-orange-500 mr-2 flex-shrink-0 mt-0.5" size={20} />
                           <div>
                             <h4 className="font-semibold mb-1 text-gray-900 ">{area.title}</h4>
                             <p className="text-gray-600 ">{area.description}</p>
                           </div>
                         </div>
                       ))}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold mb-4 text-gray-900 ">Try it for real!</h3>
+                      <div className="mb-4 flex">
+                        <CircleArrowRight className="text-primary mr-2 flex-shrink-0 mt-0.5" size={20} />
+                        <p className="text-gray-600 ">
+                          Now try it for real at a canvassing session near you!  <a href="https://events.labour.org.uk/" target="_blank" rel="noopener noreferrer">https://events.labour.org.uk/</a>
+                        </p>
+                      </div>
                     </div>
                   </>
                 )}
