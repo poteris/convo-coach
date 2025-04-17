@@ -34,12 +34,12 @@ CREATE TABLE labour_party.personas (
     gender VARCHAR(50) NOT NULL,
     family_status VARCHAR(255) NOT NULL,
     job VARCHAR(255) NOT NULL,
-    major_issues_in_workplace TEXT NOT NULL,
+    major_issues TEXT NOT NULL,
     uk_party_affiliation VARCHAR(255) NOT NULL,
     personality_traits TEXT NOT NULL,
     emotional_conditions TEXT NOT NULL,
     busyness_level VARCHAR(50) NOT NULL,
-    workplace VARCHAR(255) NOT NULL
+    location VARCHAR(255) NOT NULL
 );
 
 -- System prompts table
