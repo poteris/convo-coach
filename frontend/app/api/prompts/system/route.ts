@@ -2,16 +2,20 @@ import { PromptWithDetails, PromptWithDetailsSchema } from "@/types/prompt";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
-import { supabase } from "../../init";
+import { createClient } from "@/utils/supabase/server";
 
 async function getSystemPrompts(): Promise<PromptWithDetails[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase.from("system_prompts").select("id, content, scenario_id, persona_id, created_at").order("created_at", { ascending: true });
-
   if (error) {
     console.error("Error fetching system prompts:", error);
-    throw new DatabaseError("Error fetching system prompts", "getSystemPrompts", DatabaseErrorCodes.Select, {
-      error,
+  const dbError = new DatabaseError("Error fetching system prompts", "getSystemPrompts", DatabaseErrorCodes.Select, {
+      details: {
+        error,
+      }
     });
+    console.error(dbError.toLog());
+    throw dbError;
   }
   const validationResult = z.array(PromptWithDetailsSchema).safeParse(data);
   if (!validationResult.success) {

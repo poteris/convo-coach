@@ -1,10 +1,11 @@
 import { PromptData, PromptDataSchema } from "@/types/prompt";
-import { supabase } from "../../init";
+import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
 
 async function getPersonaPrompts(): Promise<PromptData[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase.from("persona_prompts").select("id, content, scenario_id, persona_id, created_at").order("created_at", { ascending: true });
 
   if (error) {

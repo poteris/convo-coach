@@ -1,4 +1,4 @@
-import { supabase } from "../../init";
+import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getScenarioById } from "@/lib/server/services/scenarios/getScenarios";
 import { DatabaseError, DatabaseErrorCodes, isError } from "@/utils/errors";
@@ -16,6 +16,7 @@ type UpdateScenario = z.infer<typeof UpdateScenarioSchema>;
 async function updateScenarioObjectives(scenarioId: string, objectives: string[]): Promise<void> {
   
   try {
+    const supabase = await createClient();
   // First delete existing objectives
   const { error: deleteError } = await supabase
     .from("scenario_objectives")
@@ -55,7 +56,7 @@ async function updateScenarioObjectives(scenarioId: string, objectives: string[]
       throw dbError;
     }
   }
-  } catch (error: unknown) {
+} catch (error: unknown) {
     const dbError = new DatabaseError("Failed to update scenario objectives", "updateScenarioObjectives", DatabaseErrorCodes.Update, {
       details: {
         error: isError(error) ? error : new Error(String(error)),
@@ -69,6 +70,7 @@ async function updateScenarioObjectives(scenarioId: string, objectives: string[]
 
 async function updateScenarioDetails( scenarioId: string, updates: UpdateScenario): Promise<void> {
   try {
+    const supabase = await createClient();
     // Update scenario details if provided
     if (updates.title || updates.description || updates.context) {
       const { error: scenarioError } = await supabase
@@ -123,6 +125,7 @@ async function updateScenarioDetails( scenarioId: string, updates: UpdateScenari
 // TODO: Update to handle the case where the scenario id is not found
 async function deleteScenario(scenarioId: string): Promise<void> {
   try {
+  const supabase = await createClient();
   // First delete the objectives for this scenario
   const { error: objectivesError } = await supabase
     .from("scenario_objectives")
