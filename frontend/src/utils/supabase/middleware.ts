@@ -14,6 +14,7 @@ export async function updateSession(request: NextRequest) {
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
     {
+      db: { schema: process.env.SUPABASE_SCHEMA || 'public' },
       cookies: {
         getAll() {
           return request.cookies.getAll()

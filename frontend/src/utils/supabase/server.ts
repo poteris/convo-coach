@@ -10,6 +10,7 @@ export async function createClient() {
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
     {
+      db: { schema: process.env.SUPABASE_SCHEMA || 'public' },
       cookies: {
         getAll() {
           return cookieStore.getAll()

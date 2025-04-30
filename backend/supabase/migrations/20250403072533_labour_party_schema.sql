@@ -1,6 +1,10 @@
 -- Drop existing schema
 DROP SCHEMA IF EXISTS labour_party CASCADE;
 CREATE SCHEMA labour_party;
+REVOKE ALL ON SCHEMA labour_party FROM PUBLIC; -- Security: revoke all privileges from public
+
+-- Grant usage to the schema
+GRANT USAGE ON SCHEMA labour_party TO anon, authenticated, service_role;
 
 -- Enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -45,6 +49,8 @@ CREATE TABLE labour_party.personas (
 -- System prompts table
 CREATE TABLE labour_party.system_prompts (
     id SERIAL PRIMARY KEY,
+    scenario_id VARCHAR(255) REFERENCES labour_party.scenarios(id),
+    persona_id VARCHAR(255) REFERENCES labour_party.personas(id),
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -63,6 +69,8 @@ CREATE TABLE labour_party.scenario_prompts (
 -- Persona prompts table
 CREATE TABLE labour_party.persona_prompts (
     id SERIAL PRIMARY KEY,
+    scenario_id VARCHAR(255) REFERENCES labour_party.scenarios(id),
+    persona_id VARCHAR(255) REFERENCES labour_party.personas(id),
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -71,6 +79,8 @@ CREATE TABLE labour_party.persona_prompts (
 -- Feedback prompts table
 CREATE TABLE labour_party.feedback_prompts (
     id SERIAL PRIMARY KEY,
+    scenario_id VARCHAR(255) REFERENCES labour_party.scenarios(id),
+    persona_id VARCHAR(255) REFERENCES labour_party.personas(id),
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -103,84 +113,140 @@ CREATE TABLE labour_party.messages (
   FOREIGN KEY (conversation_id) REFERENCES labour_party.conversations(conversation_id)
 );
 
+-- User Profiles table
+CREATE TABLE labour_party.profiles (
+  user_id UUID REFERENCES auth.users PRIMARY KEY,
+  email TEXT NOT NULL,
+  is_admin BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- Create policies
-CREATE POLICY "Users can only access their own conversations" ON labour_party.conversations
-  FOR ALL USING (auth.uid()::text = user_id::text);
 
--- Grant access to tables for authenticated users
-GRANT ALL ON labour_party.messages TO authenticated;
-GRANT ALL ON labour_party.conversations TO authenticated;
-GRANT ALL ON labour_party.feedback_prompts TO authenticated;
-GRANT ALL ON labour_party.scenario_prompts TO authenticated;
-GRANT ALL ON labour_party.persona_prompts TO authenticated;
-
--- Update grants for sequences
+-- SEQUENCE GRANTS
 GRANT ALL ON ALL SEQUENCES IN SCHEMA labour_party TO authenticated;
 
--- Finally, grant usage to the schema
-GRANT USAGE ON SCHEMA labour_party TO anon, authenticated, service_role;
+-- TABLE GRANTS
+GRANT SELECT ON ALL TABLES IN SCHEMA labour_party TO "anon";
+GRANT INSERT ON TABLE "labour_party"."messages" to "anon";
+GRANT INSERT ON TABLE "labour_party"."conversations" to "anon";
+GRANT INSERT ON TABLE "labour_party"."personas" to "anon";
+GRANT UPDATE ON TABLE "labour_party"."personas" to "anon";
 
-grant select on table "labour_party"."conversations" to "anon";
-grant select on table "labour_party"."feedback_prompts" to "anon";
-grant select on table "labour_party"."messages" to "anon";
-grant select on table "labour_party"."persona_prompts" to "anon";
-grant select on table "labour_party"."personas" to "anon";
-grant select on table "labour_party"."scenario_objectives" to "anon";
-grant select on table "labour_party"."scenario_prompts" to "anon";
-grant select on table "labour_party"."scenarios" to "anon";
-grant select on table "labour_party"."system_prompts" to "anon";
+-- Grant access to tables for authenticated users (this is just the admin user, for now)
+GRANT ALL ON ALL TABLES IN SCHEMA labour_party TO authenticated;
 
-grant insert on table "labour_party"."messages" to "anon";
-grant insert on table "labour_party"."conversations" to "anon";
-grant insert on table "labour_party"."personas" to "anon";
-grant update on table "labour_party"."personas" to "anon";
+-- Grant access to tables for service role
+GRANT SELECT ON TABLE "labour_party"."profiles" TO service_role;
+GRANT INSERT ON TABLE "labour_party"."profiles" TO service_role;
+GRANT UPDATE ON TABLE "labour_party"."profiles" TO service_role;
 
+-- FUNCTIONS
+
+-- Create revocation function, to revoke service role privileges, once the admin user has been created
+CREATE OR REPLACE FUNCTION labour_party.revoke_service_privileges()
+RETURNS void AS $$
+BEGIN
+  REVOKE INSERT, UPDATE ON TABLE labour_party.profiles FROM service_role;
+  DROP POLICY IF EXISTS "service_role inserts profiles" ON labour_party.profiles;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION labour_party.revoke_service_privileges() TO service_role;
+
+-- Admin verification function
+CREATE OR REPLACE FUNCTION labour_party.is_admin()
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM labour_party.profiles
+    WHERE user_id = auth.uid() AND is_admin = TRUE
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ROW LEVEL SECURITY 
 ALTER TABLE labour_party.conversations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_conversations" ON labour_party.conversations
-  FOR SELECT TO anon USING (true);
-
-CREATE POLICY "anon_insert_conversations" ON labour_party.conversations
-  FOR INSERT TO anon WITH CHECK (true);
-
 ALTER TABLE labour_party.messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_messages" ON labour_party.messages
-  FOR SELECT TO anon USING (true);
-
-CREATE POLICY "anon_insert_messages" ON labour_party.messages
-  FOR INSERT TO anon WITH CHECK (true);
-
 ALTER TABLE labour_party.personas ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_personas" ON labour_party.personas
-  FOR SELECT TO anon USING (true);
-
-CREATE POLICY "anon_insert_personas" ON labour_party.personas
-  FOR INSERT TO anon WITH CHECK (true);
-
-CREATE POLICY "anon_update_personas" ON labour_party.personas
-  FOR UPDATE TO anon WITH CHECK (true);
-
 ALTER TABLE labour_party.feedback_prompts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_feedback_prompts" ON labour_party.feedback_prompts
-  FOR SELECT TO anon USING (true);
-
 ALTER TABLE labour_party.persona_prompts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_persona_prompts" ON labour_party.persona_prompts
-  FOR SELECT TO anon USING (true);
-
-
+ALTER TABLE labour_party.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE labour_party.scenario_objectives ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_scenario_objectives" ON labour_party.scenario_objectives
-  FOR SELECT TO anon USING (true);
-
 ALTER TABLE labour_party.scenario_prompts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_scenario_prompts" ON labour_party.scenario_prompts
-  FOR SELECT TO anon USING (true);
-
 ALTER TABLE labour_party.scenarios ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_scenarios" ON labour_party.scenarios
-  FOR SELECT TO anon USING (true);
-
 ALTER TABLE labour_party.system_prompts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_select_system_prompts" ON labour_party.system_prompts
-  FOR SELECT TO anon USING (true);
+
+ALTER TABLE labour_party.conversations FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.messages FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.personas FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.feedback_prompts FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.persona_prompts FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.profiles FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.scenario_objectives FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.scenario_prompts FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.scenarios FORCE ROW LEVEL SECURITY;
+ALTER TABLE labour_party.system_prompts FORCE ROW LEVEL SECURITY;
+
+-- Row level security policies for anonymous users
+CREATE POLICY "select_conversations" ON labour_party.conversations
+  FOR SELECT USING (true);
+
+CREATE POLICY "insert_conversations" ON labour_party.conversations
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "select_messages" ON labour_party.messages
+  FOR SELECT USING (true);
+
+CREATE POLICY "insert_messages" ON labour_party.messages
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "select_personas" ON labour_party.personas
+  FOR SELECT USING (true); 
+
+CREATE POLICY "insert_personas" ON labour_party.personas
+  FOR INSERT WITH CHECK (true); 
+
+CREATE POLICY "update_personas" ON labour_party.personas
+  FOR UPDATE USING (true); 
+
+CREATE POLICY "select_feedback_prompts" ON labour_party.feedback_prompts
+  FOR SELECT USING (true);
+
+CREATE POLICY "select_persona_prompts" ON labour_party.persona_prompts
+  FOR SELECT USING (true);
+
+CREATE POLICY "select_scenario_objectives" ON labour_party.scenario_objectives
+  FOR SELECT USING (true);
+
+CREATE POLICY "select_scenario_prompts" ON labour_party.scenario_prompts
+  FOR SELECT USING (true);
+
+CREATE POLICY "select_scenarios" ON labour_party.scenarios
+  FOR SELECT USING (true);
+
+CREATE POLICY "select_system_prompts" ON labour_party.system_prompts
+  FOR SELECT USING (true);
+
+-- Row level security policies for admin users
+CREATE POLICY "admin_crud_system_prompts" ON labour_party.system_prompts
+  FOR ALL USING (labour_party.is_admin());
+
+CREATE POLICY "admin_crud_feedback_prompts" ON labour_party.feedback_prompts
+  FOR ALL USING (labour_party.is_admin());
+
+CREATE POLICY "admin_crud_persona_prompts" ON labour_party.persona_prompts
+  FOR ALL USING (labour_party.is_admin());
+
+CREATE POLICY "admin_crud_scenario_prompts" ON labour_party.scenario_prompts
+  FOR ALL USING (labour_party.is_admin());
+
+CREATE POLICY "Admins see all profiles" ON labour_party.profiles
+  FOR SELECT USING (labour_party.is_admin()); 
+
+CREATE POLICY "service_role sees all profiles" ON labour_party.profiles
+  FOR SELECT TO service_role
+  USING (true);
+
+CREATE POLICY "service_role inserts profiles" ON labour_party.profiles
+  FOR INSERT TO service_role
+  WITH CHECK (true);

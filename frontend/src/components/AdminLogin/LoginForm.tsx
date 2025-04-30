@@ -51,7 +51,6 @@ export default function LoginForm() {
       
       if (error) {
         setMessage(error);
-        console.error('Login error:', error);
       } else {
         setMessage('Magic link sent! Check your email.');
         setIsLinkSent(true);
@@ -59,7 +58,7 @@ export default function LoginForm() {
       }
     } catch (err) {
       setMessage('An error occurred. Please try again.');
-      console.error('Login error:', err);
+      console.log('Login error:', err);
     } finally {
       setIsLoading(false);
     }

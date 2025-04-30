@@ -13,61 +13,60 @@ import { createClient } from '@supabase/supabase-js';
  */
 export async function signUpAdmin() {
   try {
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     if (!process.env.ADMIN_EMAIL) {
       console.log('No ADMIN_EMAIL provided, skipping admin user setup');
       return;
     }
-    
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {db: {schema: process.env.SUPABASE_SCHEMA || 'public'}}
+    );
 
-    const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
-    
-    if (listError) {
-      throw new Error(`Failed to list users: ${listError.message}`);
+    // Check if a supabase user exists with the email process.env.ADMIN_EMAIL
+    const { data: existingUsers, error: listUsersError } = await supabase.auth.admin.listUsers();
+    if (listUsersError) {
+      throw new Error(`Failed to list users: ${listUsersError.message}`);
     }
     
-    const adminUsers = existingUsers?.users.filter(
-      user => user.user_metadata?.role === 'admin' 
-    ) || [];
-    
-    // Find if our target admin already exists
-    const targetAdminExists = adminUsers.some(user => user.email === process.env.ADMIN_EMAIL);
-    
-    // Delete other admin users
-    for (const user of adminUsers) {
-      if (user.email !== process.env.ADMIN_EMAIL) {
-        const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
-        if (deleteError) {
-          console.error(`Failed to delete admin user ${user.email}: ${deleteError.message}`);
-        } else {
-          console.log(`Removed admin privileges from user: ${user.email}`);
-        }
-      }
+    if (!existingUsers?.users) {
+      throw new Error('No users data returned from Supabase');
     }
-    
-    // Create admin user if it doesn't exist
-    if (!targetAdminExists) {
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: process.env.ADMIN_EMAIL,
-        user_metadata: {
-          role: 'admin'
-        },
-         /* This confirms the email without sending verification
-         on startup we expect the creator of the app to add the admin user manually
-         so don't need to verify the email */
-        email_confirm: true 
-      });
 
-      if (error) {
-        throw new Error(`Failed to create admin user: ${error.message}`);
+    const supabaseUser = existingUsers.users.find(user => user.email === process.env.ADMIN_EMAIL);
+    
+    // Check if admin profile exists
+    const { data: adminProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select()
+      .eq('is_admin', true)
+      .single();
+
+    if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      throw new Error(`Failed to check admin profile: ${profileError.message}`);
+    }
+
+    const adminSetupRequired = !supabaseUser || !adminProfile;
+
+    if (adminSetupRequired) {
+      if (!supabaseUser) {
+        // Create a new supabase user
+        supabaseUser = await createSupabaseUser(supabase);
+      } else {
+        console.log(`Admin user ${process.env.ADMIN_EMAIL} already exists`);
       }
       
-      console.log('New admin user created:', data.user.email);
-    } else {
-      console.log(`Admin user ${process.env.ADMIN_EMAIL} already exists`);
+      if (!adminProfile) {
+        await createAdminUserProfile(supabase, supabaseUser);
+      }
+
+      const { error: revokeError } = await supabase.rpc('revoke_service_privileges');
+      if (revokeError) {
+        throw new Error(`Failed to revoke service privileges: ${revokeError.message}`);
+      }
+      
+      console.log('Admin user setup complete: Service role privileges revoked');
     }
   } catch (error) {
-     console.error('Error in signUpAdmin:', error);
+    console.error('Error in signUpAdmin:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     console.error('Admin user setup failed:', errorMessage);
   }
@@ -88,3 +87,45 @@ const nextConfig = {
 };
 
 export default nextConfig;
+
+async function createAdminUserProfile(supabase, supabaseUser) {
+  const { error } = await supabase.from('profiles').upsert({
+    user_id: supabaseUser.id,
+    email: supabaseUser.email,
+    is_admin: true
+  });
+  if (error) {
+    console.error('Error upserting admin user profile:', error);
+    throw new Error(`Failed to create admin profile: ${error.message}`);
+  } 
+  console.log('New admin user profile created:', supabaseUser.email, 'for schema:', process.env.SUPABASE_SCHEMA);
+}
+async function getAdminUserProfile(supabase, supabaseUser) {
+  // Check if the admin user has a profile in the current schema
+  const { data: adminUserProfile, error: queryError } = await supabase
+  .from('profiles')
+  .select()
+  .eq('is_admin', true).eq('user_id', supabaseUser.id);
+
+  if (queryError) {
+    throw new Error(`Failed to check admin user profile: ${queryError.message}`);
+  }
+  return adminUserProfile;
+}
+
+async function createSupabaseUser(supabase) {
+  const { data, error } = await supabase.auth.admin.createUser({
+    email: process.env.ADMIN_EMAIL,
+    email_confirm: true
+    /* This confirms the email without sending verification
+     on startup we expect the creator of the app to add the admin user manually
+     so don't need to verify the email */
+  });
+  if (error || !data.user) {
+    throw new Error(`Failed to create supabase admin user: ${error.message}`);
+  } else {
+    console.log('New supabase admin user created:', data.user.email);
+  }
+  return data.user;
+}
+

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingSpinner } from "@/components/ui";
 import axios from "axios";
 import { PromptData, PromptWithDetails } from "@/types/prompt";
@@ -241,20 +240,13 @@ const PromptManager: React.FC<PromptManagerProps> = ({ type }) => {
           </div>
 
           {/* Right Column: Prompt Input */}
-          <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">Prompt Content</label>
-            </div>
-            <div className="flex-grow h-full min-h-[400px]">
-              <Input
-                type="textarea"
-                value={promptContent}
-                onChange={(e) => setPromptContent(e.target.value)}
-                className="w-full h-full resize-none"
-                placeholder="Enter your prompt..."
-                required
-              />
-            </div>
+          <div className="space-y-4">
+            <textarea
+              value={promptContent}
+              onChange={(e) => setPromptContent(e.target.value)}
+              className="w-full h-[400px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none whitespace-pre-wrap"
+              placeholder={`Enter your ${type} prompt here...`}
+            />
           </div>
         </div>
       </div>

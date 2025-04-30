@@ -2,9 +2,18 @@ import { createClient } from '@/utils/supabase/server'
 import LoginForm from '@/components/AdminLogin/LoginForm'
 import { SiteAdmin } from '@/components/screens/SiteAdmin'
 
-
-function isAdmin(user: { user_metadata?: { role?: string } } | null): boolean {
-  return user?.user_metadata?.role === 'admin'
+async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('user_id', userId)
+    .single()
+  
+  if (error || !data) {
+    return false
+  }
+  
+  return data.is_admin
 }
 
 export default async function AdminPage() {
@@ -13,15 +22,10 @@ export default async function AdminPage() {
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
     
-    if (error) {
-      console.error('Error fetching user:', error)
+    if (error || !user || !(await isAdmin(supabase, user.id))) {
       return <LoginForm />
     }
-    
-    if (!user || !isAdmin(user)) {
-      return <LoginForm />
-    }
-        
+
     return (
       <SiteAdmin />
     )
