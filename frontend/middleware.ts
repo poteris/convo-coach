@@ -17,5 +17,6 @@ export const config = {
      */
     // '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     '/admin/:path*', // NOTE: we only run this middleware for the admin page
+    '/organiser-admin/:path*', // Add protection for organiser-admin routes
   ],
 }

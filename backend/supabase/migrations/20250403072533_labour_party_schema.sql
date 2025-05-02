@@ -118,6 +118,7 @@ CREATE TABLE labour_party.profiles (
   user_id UUID REFERENCES auth.users PRIMARY KEY,
   email TEXT NOT NULL,
   is_admin BOOLEAN DEFAULT FALSE,
+  is_organiser BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -160,6 +161,17 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM labour_party.profiles
     WHERE user_id = auth.uid() AND is_admin = TRUE
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Organiser verification function
+CREATE OR REPLACE FUNCTION labour_party.is_organiser()
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM labour_party.profiles
+    WHERE user_id = auth.uid() AND is_organiser = TRUE
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -250,3 +262,19 @@ CREATE POLICY "service_role sees all profiles" ON labour_party.profiles
 CREATE POLICY "service_role inserts profiles" ON labour_party.profiles
   FOR INSERT TO service_role
   WITH CHECK (true);
+
+-- Row level security policies for organiser users
+CREATE POLICY "organiser_crud_system_prompts" ON labour_party.system_prompts
+  FOR ALL USING (labour_party.is_organiser());
+
+CREATE POLICY "organiser_crud_feedback_prompts" ON labour_party.feedback_prompts
+  FOR ALL USING (labour_party.is_organiser());
+
+CREATE POLICY "organiser_crud_persona_prompts" ON labour_party.persona_prompts
+  FOR ALL USING (labour_party.is_organiser());
+
+CREATE POLICY "organiser_crud_scenario_prompts" ON labour_party.scenario_prompts
+  FOR ALL USING (labour_party.is_organiser());
+
+CREATE POLICY "Organisers see all profiles" ON labour_party.profiles
+  FOR SELECT USING (labour_party.is_organiser());

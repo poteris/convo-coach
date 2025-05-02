@@ -8,6 +8,7 @@ import axios from "axios";
 import { PromptData, PromptWithDetails } from "@/types/prompt";
 import { LogOut } from "lucide-react";
 import { logoutUser } from "@/components/AdminLogin/actions";
+import { OrganisersTab } from "@/components/screens/OrganisersTab";
 
 async function getFeedbackPrompts(): Promise<PromptData[]> {
   const response = await axios.get<PromptData[]>("/api/prompts/feedback");
@@ -262,43 +263,55 @@ const PromptManager: React.FC<PromptManagerProps> = ({ type }) => {
 };
 
 export const SiteAdmin: React.FC = () => {
-
-
   return (
-    <div className="flex flex-col h-full bg-white">
-      <Header title="Site Admin - Prompts" variant="alt" />
-      <div className="flex-grow w-full max-w-4xl mx-auto p-6 overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-gray-900">Prompt Management</h1>
-          <Button 
-            onClick={() => {
-              logoutUser();
-            }} 
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <main className="py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-semibold text-gray-900">Admin Dashboard</h1>
+            <Button onClick={logoutUser} variant="outline" className="flex items-center gap-2">
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
 
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600"
-          >
-            <LogOut size={18} className="text-white" />
-            <span>Logout</span>
-          </Button>
+          <Tabs defaultValue="prompts" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="prompts">Prompts</TabsTrigger>
+              <TabsTrigger value="organisers">Organisers</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="prompts" className="space-y-4">
+              <div className="bg-white shadow rounded-lg">
+                <div className="p-6">
+                  <PromptManager type="system" />
+                </div>
+              </div>
+
+              <div className="bg-white shadow rounded-lg">
+                <div className="p-6">
+                  <PromptManager type="feedback" />
+                </div>
+              </div>
+
+              <div className="bg-white shadow rounded-lg">
+                <div className="p-6">
+                  <PromptManager type="persona" />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="organisers">
+              <div className="bg-white shadow rounded-lg">
+                <div className="p-6">
+                  <OrganisersTab />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
-
-        <Tabs defaultValue="system" className="w-full">
-          <TabsList>
-            <TabsTrigger value="system">System Prompt</TabsTrigger>
-            <TabsTrigger value="feedback">Feedback Prompt</TabsTrigger>
-            <TabsTrigger value="persona">Persona Prompt</TabsTrigger>
-          </TabsList>
-          <TabsContent value="system">
-            <PromptManager type="system" />
-          </TabsContent>
-          <TabsContent value="feedback">
-            <PromptManager type="feedback" />
-          </TabsContent>
-          <TabsContent value="persona">
-            <PromptManager type="persona" />
-          </TabsContent>
-        </Tabs>
-      </div>
+      </main>
     </div>
   );
 };
