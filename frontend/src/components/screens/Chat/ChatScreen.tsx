@@ -14,7 +14,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { LogOut, SendHorizontal } from "lucide-react"
 import { ChatInput } from "@/components/ChatInput/ChatInput"
-import { createClient } from "@/utils/supabase/client"
 
 export interface ConversationData {
   messages: Message[];

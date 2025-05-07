@@ -35,7 +35,7 @@ async function sendMessage(headers: Headers, { conversationId, content }: { conv
       const errorMessage = `I'm sorry, but I can't process your message as it ${validationResult.error?.toLowerCase()}. Please try again with a shorter message.`;
       // Save both the user message and the validation error to the database, but exclude from LLM context
       await saveMessages(conversationId, sanitisedContent, errorMessage, false);
-      return { content: errorMessage };
+      return { content: errorMessage, isValidationError: true };
     }
 
     console.log('[API] Validation passed, proceeding with message processing');
@@ -80,7 +80,7 @@ async function sendMessage(headers: Headers, { conversationId, content }: { conv
       await saveMessages(conversationId, sanitisedContent, aiResponse, true);
     }
 
-    return { content: aiResponse };
+    return { content: aiResponse, isValidationError: false };
   } catch (error) {
     console.error('Error in sendMessage:', error);
     throw error;
@@ -110,15 +110,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to get a message from LLM" }, { status: 500 });
     }
 
-    // If this is a validation error, just return it directly without saving to database
-    if (response.isValidationError) {
-      const validationMessage = { id: uuid(), text: response.content, sender: "bot" };
-      const parsedResponse = userMessageResponseSchema.parse(validationMessage);
-      return NextResponse.json(parsedResponse, { status: 200 });
-    }
-
-    const llmMessage = { id: uuid(), text: response.content, sender: "bot" };
-    const parsedResponse = userMessageResponseSchema.parse(llmMessage);
+    const message = { id: uuid(), text: response.content, sender: "bot" };
+    const parsedResponse = userMessageResponseSchema.parse(message);
 
     return NextResponse.json(parsedResponse, { status: 200 });
   } catch (error) {
