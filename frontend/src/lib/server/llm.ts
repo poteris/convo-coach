@@ -1,25 +1,34 @@
 'use server'
-import OpenAI from "openai";
 import { Persona } from "@/types/persona";
 import { TrainingScenario } from "@/types/scenarios";
 import Handlebars from "handlebars";
 import { getOpenAIClient } from './services/openai/OpenAIClientFactory';
 import { ChatCompletionRequest } from './services/openai/ChatCompletionTypes';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
-const llm_model = process.env.LLM_MODEL || "gpt-4o";
+const llmModel = process.env.LLM_MODEL || "gpt-4o";
 
-export async function getAIResponse(messages: OpenAI.ChatCompletionMessageParam[], headers: Headers = new Headers()): Promise<string | null> {
-  const formattedMessages = messages.map((msg) => ({
-    role: msg.role as "user" | "system" | "assistant",
-    content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
-  }));
-  const params: ChatCompletionRequest = {
-    messages: formattedMessages,
-    model: llm_model,
-  };
+export type Message = ChatCompletionMessageParam;
 
-  const completion = await getOpenAIClient(headers).createChatCompletion(params);
-  return completion.choices[0]?.message?.content ?? null;
+export async function getAIResponse(
+  messages: Message[],
+  headers?: Headers,
+  model?: string
+): Promise<string | null> {
+  try {
+    const params: ChatCompletionRequest = {
+      messages,
+      model: model || llmModel,
+      temperature: 0.7,
+      max_tokens: 1000,
+    };
+
+    const completion = await getOpenAIClient(headers).createChatCompletion(params);
+    return completion.choices[0]?.message?.content ?? null;
+  } catch (error) {
+    console.error('Error getting AI response:', error);
+    return null;
+  }
 }
 
 export async function createBasePromptForMessage(
@@ -44,7 +53,6 @@ export async function createBasePromptForMessage(
       personality_traits: persona.personality_traits,
       emotional_conditions: persona.emotional_conditions,
       busyness_level: persona.busyness_level,
-      // workplace: persona.workplace,
       location: persona.location,
     });
     return finalPrompt;

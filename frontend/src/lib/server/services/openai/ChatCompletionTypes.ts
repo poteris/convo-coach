@@ -1,9 +1,10 @@
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+
 export interface ChatCompletionRequest {
+  messages: ChatCompletionMessageParam[];
   model: string;
-  messages: Array<{
-    role: string;
-    content: string;
-  }>;
+  temperature?: number;
+  max_tokens?: number;
 
   tool_choice?: {
     type: string;
@@ -18,8 +19,6 @@ export interface ChatCompletionRequest {
     };
   }>;
   store?: boolean;
-  temperature?: number;
-  max_tokens?: number;
 }
 
 export interface ChatCompletionResponse {

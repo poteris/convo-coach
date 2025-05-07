@@ -5,6 +5,7 @@ import {  getAIResponse, createBasePromptForMessage } from "@/lib/server/llm";
 import { getConversationContext, saveMessages } from "@/lib/server/db";
 import OpenAI from "openai";
 import { createClient } from "@/utils/supabase/server";
+import { checkRateLimit, validateMessage, sanitiseInput } from "@/lib/server/security";
 
 const userMessageResponseSchema = z.object({
   id: z.string(),
@@ -21,15 +22,33 @@ const sendUserMessageRequestSchema = z.object({
 
 async function sendMessage(headers: Headers, { conversationId, content }: { conversationId: string; content: string; scenarioId?: string }) {
   try {
+    console.log('[API] Starting message processing');
+    // Sanitize and validate user input
+    const sanitisedContent = sanitiseInput(content);
+    console.log('[API] Content sanitized, length:', sanitisedContent.length);
+    
+    const validationResult = await validateMessage(sanitisedContent);
+    console.log('[API] Validation result:', validationResult);
+    
+    if (!validationResult.isValid) {
+      console.log('[API] Validation failed, returning friendly message');
+      const errorMessage = `I'm sorry, but I can't process your message as it ${validationResult.error?.toLowerCase()}. Please try again with a shorter message.`;
+      // Save both the user message and the validation error to the database, but exclude from LLM context
+      await saveMessages(conversationId, sanitisedContent, errorMessage, false);
+      return { content: errorMessage };
+    }
+
+    console.log('[API] Validation passed, proceeding with message processing');
     const supabase = await createClient();
     // Get conversation context
     const { persona, scenario, systemPrompt } = await getConversationContext(conversationId);
 
-    // Get message history
+    // Get message history, only including messages marked for LLM context
     const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
       .select('role, content')
       .eq('conversation_id', conversationId)
+      .eq('llm_context', true)
       .order('created_at', { ascending: true });
 
     if (messagesError) throw messagesError;
@@ -44,21 +63,21 @@ async function sendMessage(headers: Headers, { conversationId, content }: { conv
         role: "system", 
         content: `${completePrompt}\n\nRemember to maintain consistent personality and context throughout the conversation. Previous context: This is message ${messagesData.length + 1} in the conversation.`
       },
-      // Previous conversation history
-        ...messagesData.map((msg: { role: string; content: string }) => ({
-          role: msg.role as "user" | "system" | "assistant",
-          content: msg.content,
-        } as OpenAI.ChatCompletionMessageParam)),
+      // Previous conversation history (only messages marked for LLM context)
+      ...messagesData.map((msg: { role: string; content: string }) => ({
+        role: msg.role as "user" | "system" | "assistant",
+        content: msg.content,
+      } as OpenAI.ChatCompletionMessageParam)),
       // New user message
       { 
         role: "user", 
-        content: content 
+        content: sanitisedContent 
       }
     ];
 
     const aiResponse: string | null = await getAIResponse(messages, headers);
     if (aiResponse) {
-      await saveMessages(conversationId, content, aiResponse);
+      await saveMessages(conversationId, sanitisedContent, aiResponse, true);
     }
 
     return { content: aiResponse };
@@ -76,15 +95,29 @@ export async function POST(req: NextRequest) {
 
     const parsedBody = sendUserMessageRequestSchema.parse(body);
 
-    const { content } = await sendMessage(req.headers as Headers, parsedBody);
+    // Check rate limit using conversationId
+    if (!checkRateLimit(parsedBody.conversationId)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please try again later." },
+        { status: 429 }
+      );
+    }
 
-    if (!content) {
+    const response = await sendMessage(req.headers as Headers, parsedBody);
+
+    if (!response.content) {
       console.error("Error invoking assistant function:");
       return NextResponse.json({ error: "Failed to get a message from LLM" }, { status: 500 });
     }
 
-    const llmMessage = { id: uuid(), text: content, sender: "bot" };
+    // If this is a validation error, just return it directly without saving to database
+    if (response.isValidationError) {
+      const validationMessage = { id: uuid(), text: response.content, sender: "bot" };
+      const parsedResponse = userMessageResponseSchema.parse(validationMessage);
+      return NextResponse.json(parsedResponse, { status: 200 });
+    }
 
+    const llmMessage = { id: uuid(), text: response.content, sender: "bot" };
     const parsedResponse = userMessageResponseSchema.parse(llmMessage);
 
     return NextResponse.json(parsedResponse, { status: 200 });
