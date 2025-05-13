@@ -50,7 +50,7 @@ export async function sendMessage({
         content: `${basePrompt}\n ${instruction}`,
       },
       // append conversation history
-      ...messagesData.map((msg: OpenAI.ChatCompletionMessageParam) => ({
+      ...messagesData.map((msg: { role: string; content: string; created_at: string }) => ({
         role: msg.role,
         content: msg.content,
       })),

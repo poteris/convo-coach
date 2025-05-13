@@ -66,7 +66,7 @@ Here are three conversations on the doorstep which went well for reference.
 
 ======================
 Doorknocker (user): "Knock knock"
-Resident (you): "Hello"
+Resident (assistant): "Hello"
 Doorknocker: "Hi I’m Hannah from the local labour party - just calling around to see if you have an issues you’d like to raise with your local councillors?"
 Resident: "I don’t have time right now - I’m getting my daughter ready for bed."
 Doorknocker: "I’m sorry to disturb you - let me leave a leaflet with you with contact details in case you have any issues."

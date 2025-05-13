@@ -4,6 +4,7 @@ import { Persona } from "@/types/persona";
 import { z } from "zod";
 import { DatabaseError, DatabaseErrorCodes} from "@/utils/errors";
 import { createClient } from "@/utils/supabase/server";
+import { MessageData } from "@/types/feedback";
 
 export async function getAllScenarios(): Promise<TrainingScenario[]> {
   const supabase = await createClient();
@@ -230,9 +231,10 @@ export async function getAllChatMessages(conversationId: string) {
     const supabase = await createClient();
       const { data: messagesData, error: messagesError } = await supabase
       .from("messages")
-      .select("role, content")
+      .select("role, content, created_at")
       .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .order("role", { ascending: false }); // Order first by created_at, then by role, as user and assistant messages share the same created_at
 
     if (messagesError) {
       const dbError = new DatabaseError("Error fetching messages", "getAllChatMessages", DatabaseErrorCodes.Select, {
@@ -258,22 +260,21 @@ catch (error) {
 
 
 export async function getConversationById(conversationId: string) {
-const supabase = await createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("conversations")
-    .select(
-      `
-          *,
-          scenario:scenarios(*),
-          persona:personas(*),
-          messages(*)
-        `
-    )
+    .select(`
+      *,
+      scenario:scenarios(*),
+      persona:personas(*),
+      messages!inner(*)
+    `)
     .eq("conversation_id", conversationId)
-  
+    .eq("messages.llm_context", true)
     .single();
 
   if (error) {
+    console.error("Supabase error:", error);
     const dbError = new DatabaseError("Error fetching conversation", "getConversationById", DatabaseErrorCodes.Select, {
       details: {
         error: error,
@@ -282,6 +283,13 @@ const supabase = await createClient();
     console.error(dbError.toLog());
     throw dbError;
   }
+
+  // Order messages by created_at and role. User and assistant messages share the same created_at
+  data.messages.sort((a: MessageData, b: MessageData) => {
+    const timeCompare = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (timeCompare !== 0) return timeCompare;
+    return a.role.localeCompare(b.role); // user before assistant
+  });
 
   return data;
 }

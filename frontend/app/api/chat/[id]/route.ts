@@ -31,8 +31,18 @@ interface Message {
 async function getConversationDataByConversationId(id: string) {
     try {
         const supabase = await createClient();
-        const { data, error } = await supabase.from("messages").select("*").eq("conversation_id", id)
-        const { data: chatData, error: chatDataError } = await supabase.from("conversations").select("conversation_id, scenario_id, user_id, persona_id, system_prompt_id, feedback_prompt_id").eq("conversation_id", id).single();
+        const { data, error } = await supabase
+            .from("messages")
+            .select("*")
+            .eq("conversation_id", id)
+            .order("created_at", { ascending: true })
+            .order("role", { ascending: false }); // Order first by created_at, then by role, as user and assistant messages share the same created_at
+            
+        const { data: chatData, error: chatDataError } = await supabase
+            .from("conversations")
+            .select("conversation_id, scenario_id, user_id, persona_id, system_prompt_id, feedback_prompt_id")
+            .eq("conversation_id", id)
+            .single();
         
         const conversationData: ConversationData = {
             messages: data || [],
