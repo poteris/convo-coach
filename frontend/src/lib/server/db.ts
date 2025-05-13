@@ -270,7 +270,6 @@ export async function getConversationById(conversationId: string) {
       messages!inner(*)
     `)
     .eq("conversation_id", conversationId)
-    .eq("messages.llm_context", true)
     .single();
 
   if (error) {
