@@ -31,7 +31,7 @@ async function sendMessage(headers: Headers, { conversationId, content }: { conv
     
     if (!validationResult.isValid) {
       console.log('[API] Validation failed, returning friendly message');
-      const errorMessage = `I'm sorry, but I can't process your message. ${validationResult.error?.toLowerCase()}`;
+      const errorMessage = `I'm sorry, but I can't process your message as ${validationResult.error}`;
       // Save both the user message and the validation error to the database, but exclude from LLM context
       await saveMessages(conversationId, sanitisedContent, errorMessage, false);
       return { content: errorMessage, isValidationError: true };

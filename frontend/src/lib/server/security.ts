@@ -166,51 +166,51 @@ Only include categories that are definitely present. Be conservative in your ass
 const messageSchema = z.object({
   content: z.string()
     .min(MIN_WORDS, { 
-      message: "Your message cannot be empty. Please enter a message."
+      message: "It cannot be empty. Please enter a message."
     })
     .refine((content: string) => {
       const wordCount = countWords(content);
       return wordCount >= MIN_WORDS && wordCount <= MAX_WORDS;
     }, { 
-      message: `Your message was too long. Please keep your message between ${MIN_WORDS} and ${MAX_WORDS} words.`
+      message: `It was too long. Please keep your message between ${MIN_WORDS} and ${MAX_WORDS} words.`
     })
     .refine((content: string) => {
       return ALLOWED_CHARACTERS.test(content);
     }, { 
-      message: "Your message contains invalid characters. Please use only standard letters, numbers, and basic punctuation."
+      message: "It contains invalid characters. Please use only standard letters, numbers, and basic punctuation."
     })
     .refine((content: string) => {
       const lines = content.split('\n');
       if (lines.length === 1) return true;
       return lines.every((line: string) => line.length <= MAX_LINE_LENGTH);
     }, { 
-      message: `Your message exceeded the maximum line length. Please keep each line under ${MAX_LINE_LENGTH} characters.`
+      message: `It exceeded the maximum line length. Please keep each line under ${MAX_LINE_LENGTH} characters.`
     })
     .refine((content: string) => {
       const lines = content.split('\n');
       return lines.length <= MAX_LINES;
     }, { 
-      message: `Your message exceeded the maximum number of lines. Please keep your message to ${MAX_LINES} lines or less.`
+      message: `It exceeded the maximum number of lines. Please keep your message to ${MAX_LINES} lines or less.`
     })
     .refine((content: string) => {
       return !content.match(/\s{3,}/);
     }, { 
-      message: "Your message contains excessive whitespace. Please avoid using multiple spaces or line breaks in a row."
+      message: "It contains excessive whitespace. Please avoid using multiple spaces or line breaks in a row."
     })
     .refine((content: string) => {
       return !content.match(/(.)\1{4,}/);
     }, { 
-      message: "Your message contains too many repeated characters. Please avoid repeating the same character multiple times."
+      message: "It contains too many repeated characters. Please avoid repeating the same character multiple times."
     })
     .refine((content: string) => !FORBIDDEN_PATTERNS.some(pattern => pattern.test(content)), {
-      message: "Your message contains forbidden patterns. Please avoid attempts to modify my behavior."
+      message: "It contains forbidden patterns. Please avoid attempts to modify my behavior."
     })
 });
 
 /**
  * Validates a message against security rules and content restrictions
  */
-export async function validateMessage(content: string): Promise<{ isValid: boolean; error?: string; advice?: string }> {
+export async function validateMessage(content: string): Promise<{ isValid: boolean; error?: string }> {
   try {
     console.log('[Validation] Starting validation for message of length', content.length);
     messageSchema.parse({ content });
@@ -221,8 +221,7 @@ export async function validateMessage(content: string): Promise<{ isValid: boole
       console.log('[Validation] Harmful content detected in categories:', categories);
       return {
         isValid: false,
-        error: `Message contains harmful content in categories: ${categories.join(', ')}`,
-        advice: 'Please ensure your message does not contain harmful, discriminatory, or inappropriate content.'
+        error: `It contains harmful content in categories: ${categories.join(', ')}`,
       };
     }
 
@@ -241,8 +240,7 @@ export async function validateMessage(content: string): Promise<{ isValid: boole
     console.error("[Validation] Message validation failed:", error);
     return {
       isValid: false,
-      error: "Message validation failed",
-      advice: "Please try again with a different message."
+      error: "Validation failed",
     };
   }
 }
