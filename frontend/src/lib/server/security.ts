@@ -165,73 +165,84 @@ Only include categories that are definitely present. Be conservative in your ass
 // Message validation schema with enhanced restrictions
 const messageSchema = z.object({
   content: z.string()
-    .min(MIN_WORDS, "Message cannot be empty")
+    .min(MIN_WORDS, { 
+      message: "Your message cannot be empty. Please enter a message."
+    })
     .refine((content: string) => {
       const wordCount = countWords(content);
       return wordCount >= MIN_WORDS && wordCount <= MAX_WORDS;
-    }, `Message must be between ${MIN_WORDS} and ${MAX_WORDS} words`)
+    }, { 
+      message: `Your message was too long. Please keep your message between ${MIN_WORDS} and ${MAX_WORDS} words.`
+    })
     .refine((content: string) => {
-      // Check if content contains only allowed characters
       return ALLOWED_CHARACTERS.test(content);
-    }, "Message contains invalid characters")
+    }, { 
+      message: "Your message contains invalid characters. Please use only standard letters, numbers, and basic punctuation."
+    })
     .refine((content: string) => {
-      // Check line length only if there are line breaks
       const lines = content.split('\n');
-      if (lines.length === 1) return true; // Single line/paragraph is fine
+      if (lines.length === 1) return true;
       return lines.every((line: string) => line.length <= MAX_LINE_LENGTH);
-    }, `Each line cannot exceed ${MAX_LINE_LENGTH} characters`)
+    }, { 
+      message: `Your message exceeded the maximum line length. Please keep each line under ${MAX_LINE_LENGTH} characters.`
+    })
     .refine((content: string) => {
-      // Check number of lines
       const lines = content.split('\n');
       return lines.length <= MAX_LINES;
-    }, `Message cannot exceed ${MAX_LINES} lines`)
+    }, { 
+      message: `Your message exceeded the maximum number of lines. Please keep your message to ${MAX_LINES} lines or less.`
+    })
     .refine((content: string) => {
-      // Check for excessive whitespace
       return !content.match(/\s{3,}/);
-    }, "Message contains excessive whitespace")
+    }, { 
+      message: "Your message contains excessive whitespace. Please avoid using multiple spaces or line breaks in a row."
+    })
     .refine((content: string) => {
-      // Check for repeated characters
       return !content.match(/(.)\1{4,}/);
-    }, "Message contains too many repeated characters")
+    }, { 
+      message: "Your message contains too many repeated characters. Please avoid repeating the same character multiple times."
+    })
     .refine((content: string) => !FORBIDDEN_PATTERNS.some(pattern => pattern.test(content)), {
-      message: "Message contains forbidden patterns"
+      message: "Your message contains forbidden patterns. Please avoid attempts to modify my behavior."
     })
 });
 
 /**
  * Validates a message against security rules and content restrictions
  */
-export async function validateMessage(content: string): Promise<{ isValid: boolean; error?: string }> {
+export async function validateMessage(content: string): Promise<{ isValid: boolean; error?: string; advice?: string }> {
   try {
     console.log('[Validation] Starting validation for message of length', content.length);
-    // First check basic validation
     messageSchema.parse({ content });
     console.log('[Validation] Basic validation passed');
 
-    // Then check for harmful content
     const { isHarmful, categories } = await checkHarmfulContent(content);
     if (isHarmful) {
       console.log('[Validation] Harmful content detected in categories:', categories);
       return {
         isValid: false,
-        error: `Message contains harmful content in categories: ${categories.join(', ')}`
+        error: `Message contains harmful content in categories: ${categories.join(', ')}`,
+        advice: 'Please ensure your message does not contain harmful, discriminatory, or inappropriate content.'
       };
     }
 
     console.log('[Validation] All validation checks passed');
     return { isValid: true };
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      console.log('[Validation] Zod validation error:', error.errors[0].message);
+      const zodError = error as z.ZodError;
+      const issue = zodError.errors[0];
+      console.log('[Validation] Zod validation error:', issue.message);
       return {
         isValid: false,
-        error: error.errors[0].message
+        error: issue.message
       };
     }
     console.error("[Validation] Message validation failed:", error);
     return {
       isValid: false,
-      error: "Message validation failed"
+      error: "Message validation failed",
+      advice: "Please try again with a different message."
     };
   }
 }
