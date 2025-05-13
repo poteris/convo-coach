@@ -139,7 +139,7 @@ Only include categories that are definitely present. Be conservative in your ass
 
     const response = await getAIResponse([
       { role: "system", content: moderationPrompt }
-    ], undefined, SECURITY_LLM_MODEL);
+    ], { model: SECURITY_LLM_MODEL });
 
     if (!response) {
       console.error("No response from moderation check");
@@ -325,7 +325,7 @@ Be conservative in your assessment. If there's any doubt, mark it as unsafe.`;
 
     const result = await getAIResponse([
       { role: "system", content: safetyPrompt }
-    ], undefined, SECURITY_LLM_MODEL);
+    ], { model: SECURITY_LLM_MODEL });
 
     if (!result) {
       console.error("No response from safety check");

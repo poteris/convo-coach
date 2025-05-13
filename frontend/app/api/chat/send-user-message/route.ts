@@ -74,7 +74,7 @@ async function sendMessage(headers: Headers, { conversationId, content }: { conv
       }
     ];
 
-    const aiResponse: string | null = await getAIResponse(messages, headers);
+    const aiResponse: string | null = await getAIResponse(messages, { headers });
     if (aiResponse) {
       await saveMessages(conversationId, sanitisedContent, aiResponse, true);
     }

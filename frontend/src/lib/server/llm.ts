@@ -10,11 +10,18 @@ const llmModel = process.env.LLM_MODEL || "gpt-4o";
 
 export type Message = ChatCompletionMessageParam;
 
+interface AIResponseOptions {
+  headers?: Headers;
+  model?: string;
+}
+
 export async function getAIResponse(
   messages: Message[],
-  headers?: Headers,
-  model?: string
+  options?: AIResponseOptions
 ): Promise<string | null> {
+  const model = options?.model || llmModel;
+  const headers = options?.headers || new Headers();
+
   try {
     const params: ChatCompletionRequest = {
       messages,
