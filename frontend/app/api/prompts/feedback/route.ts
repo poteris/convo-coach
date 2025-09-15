@@ -8,7 +8,7 @@ import { supabase } from "../../init";
 
 
 async function getFeedbackPrompts(): Promise<PromptData[]> {
-  const { data, error } = await supabase.from("feedback_prompts").select("id, content, scenario_id, persona_id, created_at").order("created_at", { ascending: true });
+  const { data, error } = await supabase.from("feedback_prompts").select("id, content, created_at").order("created_at", { ascending: true });
 
   if (error) {
     const dbError = new DatabaseError("Error fetching feedback prompts", "getFeedbackPrompts", DatabaseErrorCodes.Select, {

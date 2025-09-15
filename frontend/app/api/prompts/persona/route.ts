@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
 
 async function getPersonaPrompts(): Promise<PromptData[]> {
-  const { data, error } = await supabase.from("persona_prompts").select("id, content, scenario_id, persona_id, created_at").order("created_at", { ascending: true });
+  const { data, error } = await supabase.from("persona_prompts").select("id, content, created_at").order("created_at", { ascending: true });
 
   if (error) {
     const dbError = new DatabaseError("Error fetching persona prompts", "getPersonaPrompts", DatabaseErrorCodes.Select, {
