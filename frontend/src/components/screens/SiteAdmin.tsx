@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingSpinner } from "@/components/ui";
 import axios from "axios";
 import { PromptData, PromptWithDetails } from "@/types/prompt";
