@@ -1,12 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseKey) {
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error("Missing Supabase environment variables");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Use service role key for API operations to bypass RLS
+export const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error("Missing OpenAI API key");
