@@ -1,5 +1,4 @@
 import { PromptWithDetails, PromptWithDetailsSchema } from "@/types/prompt";
-import { z } from "zod";
 import { NextResponse } from "next/server";
 import { DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
 import { supabase } from "../../init";
