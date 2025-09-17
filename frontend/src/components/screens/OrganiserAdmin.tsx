@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger, Modal } from "@/components/ui";
 import { slugify } from "@/utils/helpers";
 import { TrainingScenario } from "@/types/scenarios";
+import { useTenant } from "@/context/TenantContext";
 import axios from "axios";
 interface ScenarioForm {
   id: string;
@@ -46,9 +47,11 @@ async function deleteScenario(id: string) {
 }
 
 export const OrganiserAdmin: React.FC = () => {
+  const { organisationId } = useTenant();
+  
   return (
     <div className="flex flex-col h-full bg-white">
-      <Header title="Admin - Scenarios" variant="alt" />
+      <Header title={`Admin - Scenarios (${organisationId})`} variant="alt" />
       <PromptManager type="scenario" />
     </div>
   );

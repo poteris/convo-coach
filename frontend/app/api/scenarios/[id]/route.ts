@@ -2,6 +2,7 @@ import { supabase } from "../../init";
 import { NextRequest, NextResponse } from "next/server";
 import { getScenarioById } from "@/lib/server/services/scenarios/getScenarios";
 import { DatabaseError, DatabaseErrorCodes, isError } from "@/utils/errors";
+import { getTenantFromRequest } from "@/lib/tenant";
 import { z } from "zod";
 
 const UpdateScenarioSchema = z.object({
@@ -201,8 +202,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+  const organizationId = getTenantFromRequest(req);
   const id = (await params).id;
-  const scenario = await getScenarioById(id);
+  const scenario = await getScenarioById(id, organizationId);
 
       if (!scenario) {
     return NextResponse.json(
