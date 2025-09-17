@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
         strengths: parsedFeedback.strengths,
         areas_for_improvement: parsedFeedback.areas_for_improvement,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'conversation_id'
       });
 
     if (error) {
