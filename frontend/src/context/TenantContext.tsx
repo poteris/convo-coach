@@ -1,8 +1,16 @@
 'use client';
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+
+interface BrandingData {
+  logoUrl?: string;
+  primaryColor: string;
+}
 
 interface TenantContextType {
   organisationId: string;
+  branding: BrandingData;
+  refreshBranding: () => Promise<void>;
+  updateBranding: (branding: Partial<BrandingData>) => void;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -14,8 +22,48 @@ export function TenantProvider({
   children: ReactNode; 
   organisationId: string;
 }) {
+  const [branding, setBranding] = useState<BrandingData>({
+    primaryColor: '#1e3a8a',
+  });
+
+  const refreshBranding = async () => {
+    try {
+      const response = await fetch(`/api/organizations/${organisationId}/branding`);
+      if (response.ok) {
+        const data = await response.json();
+        setBranding({
+          logoUrl: data.logoUrl,
+          primaryColor: data.primaryColor || '#1e3a8a',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch branding:', error);
+    }
+  };
+
+  const updateBranding = (newBranding: Partial<BrandingData>) => {
+    setBranding(prev => ({ ...prev, ...newBranding }));
+  };
+
+  useEffect(() => {
+    refreshBranding();
+  }, [organisationId]);
+
+  // Apply CSS custom properties for dynamic theming
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      root.style.setProperty('--org-primary', branding.primaryColor);
+    }
+  }, [branding]);
+
   return (
-    <TenantContext.Provider value={{ organisationId }}>
+    <TenantContext.Provider value={{ 
+      organisationId, 
+      branding, 
+      refreshBranding, 
+      updateBranding 
+    }}>
       {children}
     </TenantContext.Provider>
   );

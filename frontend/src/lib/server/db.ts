@@ -54,7 +54,7 @@ export async function getScenario(scenarioId: string, organizationId: string = '
     `
     )
     .eq("id", scenarioId)
-    .eq('organization_id', organizationId)
+    .eq('organisation_id', organizationId)
     .single();
 
   if (error) {
@@ -74,7 +74,9 @@ export async function getScenario(scenarioId: string, organizationId: string = '
 }
 
 export async function retrievePersona(personaId: string, organizationId: string = 'default') {
-  const { data: personas, error } = await supabase.from("personas").select("*").eq("id", personaId).eq('organization_id', organizationId).single();
+  // Note: We don't filter personas by organization since they are generic worker types
+  // that can be shared across organizations. The organizationId parameter is kept for API compatibility.
+  const { data: personas, error } = await supabase.from("personas").select("*").eq("id", personaId).single();
 
   if (error) {
     const dbError = new DatabaseError("Error fetching persona", "retrievePersona", DatabaseErrorCodes.Select, {
@@ -155,10 +157,28 @@ export async function getConversationContext(conversationId: string) {
     throw dbError;
   }
 
-  // For existing conversations, we don't enforce organization filtering
-  // since the scenario/persona are already linked to the conversation
-  const scenario = await getScenario(data.scenario_id, 'default');
-  const persona = await retrievePersona(data.persona_id, 'default');
+  // First get the scenario to determine the organization
+  const { data: scenarioData, error: scenarioError } = await supabase
+    .from("scenarios")
+    .select("organisation_id")
+    .eq("id", data.scenario_id)
+    .single();
+
+  if (scenarioError) {
+    const dbError = new DatabaseError("Error fetching scenario organization", "getConversationContext", DatabaseErrorCodes.Select, {
+      details: {
+        error: scenarioError,
+      }
+    });
+    console.error(dbError.toLog());
+    throw dbError;
+  }
+
+  const organizationId = scenarioData.organisation_id;
+
+  // Now get the full scenario and persona using the correct organization
+  const scenario = await getScenario(data.scenario_id, organizationId);
+  const persona = await retrievePersona(data.persona_id, organizationId);
   const systemPrompt = await getSystemPrompt(data.system_prompt_id);
 
   if (!scenario || !persona) {
@@ -325,7 +345,7 @@ export async function getFeedbackPrompt(): Promise<FeedbackPrompt> {
 
 export async function getScenarioById(scenarioId: string, organizationId: string = 'default'): Promise<TrainingScenario> {
   
-    const { data: scenario, error } = await supabase.from("scenarios").select("*").eq("id", scenarioId).eq('organization_id', organizationId).single();
+    const { data: scenario, error } = await supabase.from("scenarios").select("*").eq("id", scenarioId).eq('organisation_id', organizationId).single();
 
   if (error) {
     const dbError = new DatabaseError("Error fetching scenario", "getScenarioById", DatabaseErrorCodes.Select, {
