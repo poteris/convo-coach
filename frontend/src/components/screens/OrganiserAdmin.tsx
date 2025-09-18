@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ async function deleteScenario(id: string) {
 }
 
 export const OrganiserAdmin: React.FC = () => {
-  const { organisationId, branding, refreshBranding, updateBranding } = useTenant();
+  const { organisationId } = useTenant();
   
   return (
     <div className="flex flex-col h-full bg-white">
@@ -58,7 +59,7 @@ export const OrganiserAdmin: React.FC = () => {
 };
 
 const PromptManager: React.FC<{ type: "scenario" }> = ({ type }) => {
-  const { organisationId, branding, refreshBranding, updateBranding } = useTenant();
+  const { organisationId, branding, updateBranding } = useTenant();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -482,9 +483,11 @@ const PromptManager: React.FC<{ type: "scenario" }> = ({ type }) => {
             <div className="flex items-center space-x-4">
               {brandingForm.logoUrl && (
                 <div className="w-16 h-16 rounded-lg border-2 border-gray-300 overflow-hidden">
-                  <img
+                  <Image
                     src={brandingForm.logoUrl}
                     alt="Current logo"
+                    width={64}
+                    height={64}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = "/images/bot-avatar.svg";
@@ -562,9 +565,11 @@ const PromptManager: React.FC<{ type: "scenario" }> = ({ type }) => {
             >
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20">
-                  <img
+                  <Image
                     src={brandingForm.logoUrl || "/images/bot-avatar.svg"}
                     alt="Logo preview"
+                    width={40}
+                    height={40}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = "/images/bot-avatar.svg";

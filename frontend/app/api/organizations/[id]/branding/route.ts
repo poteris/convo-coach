@@ -58,7 +58,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid primary color format' }, { status: 400 });
     }
 
-    const updateData: any = {};
+    const updateData: { logo_url?: string; primary_color?: string } = {};
     if (logoUrl !== undefined) updateData.logo_url = logoUrl;
     if (primaryColor !== undefined) updateData.primary_color = primaryColor;
 

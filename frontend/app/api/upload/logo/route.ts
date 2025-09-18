@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${organizationId}-logo-${Date.now()}.${fileExt}`;
     
     // Upload to Supabase Storage using service role
-    const { data: uploadData, error: uploadError } = await supabaseService.storage
+    const { error: uploadError } = await supabaseService.storage
       .from('organization-assets')
       .upload(`logos/${fileName}`, file, {
         cacheControl: '3600',
