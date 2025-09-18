@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 
 interface BrandingData {
   logoUrl?: string;
@@ -26,7 +26,7 @@ export function TenantProvider({
     primaryColor: '#1e3a8a',
   });
 
-  const refreshBranding = async () => {
+  const refreshBranding = useCallback(async () => {
     try {
       const response = await fetch(`/api/organizations/${organisationId}/branding`);
       if (response.ok) {
@@ -39,7 +39,7 @@ export function TenantProvider({
     } catch (error) {
       console.error('Failed to fetch branding:', error);
     }
-  };
+  }, [organisationId]);
 
   const updateBranding = (newBranding: Partial<BrandingData>) => {
     setBranding(prev => ({ ...prev, ...newBranding }));
@@ -47,7 +47,7 @@ export function TenantProvider({
 
   useEffect(() => {
     refreshBranding();
-  }, [organisationId]);
+  }, [organisationId, refreshBranding]);
 
   // Apply CSS custom properties for dynamic theming
   useEffect(() => {
