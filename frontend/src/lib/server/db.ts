@@ -73,7 +73,8 @@ export async function getScenario(scenarioId: string, organizationId: string = '
   };
 }
 
-export async function retrievePersona(personaId: string, organizationId: string = 'default') {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function retrievePersona(personaId: string, _organizationId: string = 'default') {
   // Note: We don't filter personas by organization since they are generic worker types
   // that can be shared across organizations. The organizationId parameter is kept for API compatibility.
   const { data: personas, error } = await supabase.from("personas").select("*").eq("id", personaId).single();
