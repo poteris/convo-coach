@@ -155,10 +155,28 @@ export async function getConversationContext(conversationId: string) {
     throw dbError;
   }
 
-  // For existing conversations, we don't enforce organization filtering
-  // since the scenario/persona are already linked to the conversation
-  const scenario = await getScenario(data.scenario_id, 'default');
-  const persona = await retrievePersona(data.persona_id, 'default');
+  // First get the scenario to determine the organization
+  const { data: scenarioData, error: scenarioError } = await supabase
+    .from("scenarios")
+    .select("organisation_id")
+    .eq("id", data.scenario_id)
+    .single();
+
+  if (scenarioError) {
+    const dbError = new DatabaseError("Error fetching scenario organization", "getConversationContext", DatabaseErrorCodes.Select, {
+      details: {
+        error: scenarioError,
+      }
+    });
+    console.error(dbError.toLog());
+    throw dbError;
+  }
+
+  const organizationId = scenarioData.organisation_id;
+
+  // Now get the full scenario and persona using the correct organization
+  const scenario = await getScenario(data.scenario_id, organizationId);
+  const persona = await retrievePersona(data.persona_id, organizationId);
   const systemPrompt = await getSystemPrompt(data.system_prompt_id);
 
   if (!scenario || !persona) {

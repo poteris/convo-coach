@@ -19,12 +19,12 @@ export const metadata: Metadata = {
   description: "Training scenarios for union representatives",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = headers();
+  const headersList = await headers();
   const host = headersList.get('host') || '';
   const organisationId = getTenantFromHost(host);
 
