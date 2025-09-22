@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const parsedFeedback = feedbackDataSchema.parse(feedback);
 
     // Save feedback to database
-    const { data, error } = await supabase
+    const {  error } = await supabase
       .from("feedback")
       .upsert({
         conversation_id: body.conversationId,
