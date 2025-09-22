@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingSpinner } from "@/components/ui";
 import axios from "axios";
 import { PromptData, PromptWithDetails } from "@/types/prompt";
@@ -240,16 +239,20 @@ const PromptManager: React.FC<PromptManagerProps> = ({ type }) => {
 
           {/* Right Column: Prompt Input */}
           <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">Prompt Content</label>
+              <span className="text-xs text-gray-500">{promptContent.length} characters</span>
             </div>
-            <div className="flex-grow h-full min-h-[400px]">
-              <Input
-                type="textarea"
+            <div className="flex-grow h-full min-h-[500px]">
+              <textarea
                 value={promptContent}
                 onChange={(e) => setPromptContent(e.target.value)}
-                className="w-full h-full resize-none"
-                placeholder="Enter your prompt..."
+                className="w-full h-full p-4 text-sm font-mono leading-relaxed border border-gray-300 rounded-md shadow-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                placeholder="Enter your prompt here..."
+                style={{ 
+                  lineHeight: '1.6',
+                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Inconsolata, "Roboto Mono", monospace'
+                }}
                 required
               />
             </div>

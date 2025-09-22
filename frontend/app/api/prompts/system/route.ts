@@ -5,7 +5,7 @@ import { DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
 import { supabase } from "../../init";
 
 async function getSystemPrompts(): Promise<PromptWithDetails[]> {
-  const { data, error } = await supabase.from("system_prompts").select("id, content, scenario_id, persona_id, created_at").order("created_at", { ascending: true });
+  const { data, error } = await supabase.from("system_prompts").select("id, content, created_at").order("created_at", { ascending: true });
 
   if (error) {
     console.error("Error fetching system prompts:", error);
