@@ -12,3 +12,5 @@ SET
     secondary_color = '#F59E0B',
     accent_color = '#EF4444'
 WHERE id = 'default';
+
+
