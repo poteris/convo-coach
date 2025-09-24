@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EvalConversation } from "@/types/evals";
+import { HumanReviewForm } from "./HumanReviewForm";
 
 interface ConversationBrowserProps {
   conversations: EvalConversation[];
@@ -15,6 +16,8 @@ interface ExpandedConversation {
   id: string;
   showMessages: boolean;
   showFeedback: boolean;
+  showAssertions: boolean;
+  showHumanReview: boolean;
 }
 
 const ConversationRow: React.FC<{
@@ -22,7 +25,48 @@ const ConversationRow: React.FC<{
   expanded: ExpandedConversation;
   onToggleMessages: () => void;
   onToggleFeedback: () => void;
-}> = ({ conversation, expanded, onToggleMessages, onToggleFeedback }) => {
+  onToggleAssertions: () => void;
+  onToggleHumanReview: () => void;
+  onUpdateConversation: (updatedConversation: EvalConversation) => void;
+}> = ({ conversation, expanded, onToggleMessages, onToggleFeedback, onToggleAssertions, onToggleHumanReview, onUpdateConversation }) => {
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const handleSubmitHumanReview = async (rating: string, notes: string) => {
+    setIsSubmittingReview(true);
+    try {
+      const response = await fetch('/api/feedback/human-review', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: conversation.conversation_id,
+          humanRating: rating,
+          humanNotes: notes
+        })
+      });
+
+      if (response.ok) {
+        // Update the conversation with new human review data
+        const updatedConversation = {
+          ...conversation,
+          human_rating: rating,
+          human_notes: notes
+        };
+        onUpdateConversation(updatedConversation);
+        onToggleHumanReview(); // Hide the form
+      } else {
+        console.error('Failed to submit human review');
+        // TODO: Add proper error handling/toast
+      }
+    } catch (error) {
+      console.error('Error submitting human review:', error);
+      // TODO: Add proper error handling/toast
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -79,6 +123,37 @@ const ConversationRow: React.FC<{
             <span className="text-gray-400 text-xs">No score</span>
           )}
         </td>
+        <td className="px-4 py-3 text-sm text-center">
+          {conversation.assertion_summary && conversation.assertion_summary.total > 0 ? (
+            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              conversation.assertion_summary.failed === 0 
+                ? 'bg-green-100 text-green-800' 
+                : conversation.assertion_summary.failed <= 1
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {conversation.assertion_summary.failed === 0 ? '✅ All Passed' : 
+               conversation.assertion_summary.failed === 1 ? '⚠️ 1 Failed' :
+               `❌ ${conversation.assertion_summary.failed} Failed`}
+            </span>
+          ) : (
+            <span className="text-gray-400 text-xs">No assertions</span>
+          )}
+        </td>
+        <td className="px-4 py-3 text-sm text-center">
+          {conversation.human_rating ? (
+            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              conversation.human_rating === 'excellent' ? 'bg-green-100 text-green-800' :
+              conversation.human_rating === 'good' ? 'bg-blue-100 text-blue-800' :
+              conversation.human_rating === 'bad' ? 'bg-red-100 text-red-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {conversation.human_rating.charAt(0).toUpperCase() + conversation.human_rating.slice(1)}
+            </span>
+          ) : (
+            <span className="text-gray-400 text-xs">No review</span>
+          )}
+        </td>
         <td className="px-4 py-3 text-sm">
           <div className="flex gap-2">
             <Button
@@ -99,6 +174,26 @@ const ConversationRow: React.FC<{
                 {expanded.showFeedback ? 'Hide' : 'Show'} Feedback
               </Button>
             )}
+            {conversation.assertion_summary && conversation.assertion_summary.total > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onToggleAssertions}
+                className="text-xs"
+              >
+                {expanded.showAssertions ? 'Hide' : 'Show'} Assertions
+              </Button>
+            )}
+            {conversation.has_feedback && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onToggleHumanReview}
+                className="text-xs"
+              >
+                {expanded.showHumanReview ? 'Hide' : conversation.human_rating ? 'Edit' : 'Add'} Review
+              </Button>
+            )}
           </div>
         </td>
       </tr>
@@ -106,7 +201,7 @@ const ConversationRow: React.FC<{
       {/* Expanded messages */}
       {expanded.showMessages && (
         <tr>
-          <td colSpan={7} className="px-4 py-6 bg-gray-50">
+          <td colSpan={9} className="px-4 py-6 bg-gray-50">
             <div className="space-y-4">
               <h4 className="font-medium text-gray-900">Conversation Messages</h4>
               <div className="max-h-96 overflow-y-auto space-y-3">
@@ -139,7 +234,7 @@ const ConversationRow: React.FC<{
       {/* Expanded feedback */}
       {expanded.showFeedback && conversation.has_feedback && (
         <tr>
-          <td colSpan={7} className="px-4 py-6 bg-yellow-50">
+          <td colSpan={9} className="px-4 py-6 bg-yellow-50">
             <div className="space-y-4">
               <h4 className="font-medium text-gray-900">AI Feedback</h4>
               
@@ -181,18 +276,81 @@ const ConversationRow: React.FC<{
           </td>
         </tr>
       )}
+
+      {/* Expanded assertions */}
+      {expanded.showAssertions && conversation.assertion_summary && conversation.assertion_summary.total > 0 && (
+        <tr>
+          <td colSpan={9} className="px-4 py-6 bg-blue-50">
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Quality Assertions</h4>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {conversation.assertions.map((assertion, index) => (
+                  <div key={index} className={`p-3 rounded border ${
+                    assertion.passed 
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-sm font-medium ${
+                        assertion.passed ? 'text-green-800' : 'text-red-800'
+                      }`}>
+                        {assertion.passed ? '✅' : '❌'} {assertion.assertion_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </span>
+                    </div>
+                    <div className={`text-xs ${
+                      assertion.passed ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      {assertion.details}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-4 p-3 bg-white rounded border border-gray-200">
+                <div className="text-sm text-gray-700">
+                  <strong>Summary:</strong> {conversation.assertion_summary.passed} of {conversation.assertion_summary.total} assertions passed
+                  {conversation.assertion_summary.failed > 0 && (
+                    <span className="text-red-600 ml-2">
+                      ({conversation.assertion_summary.failed} failed)
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+
+      {/* Expanded human review */}
+      {expanded.showHumanReview && conversation.has_feedback && (
+        <tr>
+          <td colSpan={9} className="px-4 py-6 bg-purple-50">
+            <HumanReviewForm
+              conversationId={conversation.conversation_id}
+              currentRating={conversation.human_rating}
+              currentNotes={conversation.human_notes}
+              onSubmit={handleSubmitHumanReview}
+              onCancel={onToggleHumanReview}
+              isSubmitting={isSubmittingReview}
+            />
+          </td>
+        </tr>
+      )}
     </>
   );
 };
 
 export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
-  conversations
+  conversations,
+  onConversationsChange
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<'date' | 'score' | 'length'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expandedConversations, setExpandedConversations] = useState<Record<string, ExpandedConversation>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFailedAssertionsOnly, setShowFailedAssertionsOnly] = useState(false);
   const itemsPerPage = 20;
 
   const filteredAndSortedConversations = useMemo(() => {
@@ -205,6 +363,13 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
         conv.scenario.title.toLowerCase().includes(term) ||
         conv.persona.name.toLowerCase().includes(term) ||
         conv.organization_name.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply assertion filter
+    if (showFailedAssertionsOnly) {
+      filtered = filtered.filter(conv => 
+        conv.assertion_summary && conv.assertion_summary.failed > 0
       );
     }
 
@@ -237,7 +402,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
     });
 
     return sorted;
-  }, [conversations, searchTerm, sortBy, sortOrder]);
+  }, [conversations, searchTerm, sortBy, sortOrder, showFailedAssertionsOnly]);
 
   const paginatedConversations = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -253,7 +418,9 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
         ...prev[conversationId],
         id: conversationId,
         showMessages: !prev[conversationId]?.showMessages,
-        showFeedback: prev[conversationId]?.showFeedback || false
+        showFeedback: prev[conversationId]?.showFeedback || false,
+        showAssertions: prev[conversationId]?.showAssertions || false,
+        showHumanReview: prev[conversationId]?.showHumanReview || false
       }
     }));
   };
@@ -265,9 +432,50 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
         ...prev[conversationId],
         id: conversationId,
         showMessages: prev[conversationId]?.showMessages || false,
-        showFeedback: !prev[conversationId]?.showFeedback
+        showFeedback: !prev[conversationId]?.showFeedback,
+        showAssertions: prev[conversationId]?.showAssertions || false,
+        showHumanReview: prev[conversationId]?.showHumanReview || false
       }
     }));
+  };
+
+  const toggleConversationAssertions = (conversationId: string) => {
+    setExpandedConversations(prev => ({
+      ...prev,
+      [conversationId]: {
+        ...prev[conversationId],
+        id: conversationId,
+        showMessages: prev[conversationId]?.showMessages || false,
+        showFeedback: prev[conversationId]?.showFeedback || false,
+        showAssertions: !prev[conversationId]?.showAssertions,
+        showHumanReview: prev[conversationId]?.showHumanReview || false
+      }
+    }));
+  };
+
+  const toggleConversationHumanReview = (conversationId: string) => {
+    setExpandedConversations(prev => ({
+      ...prev,
+      [conversationId]: {
+        ...prev[conversationId],
+        id: conversationId,
+        showMessages: prev[conversationId]?.showMessages || false,
+        showFeedback: prev[conversationId]?.showFeedback || false,
+        showAssertions: prev[conversationId]?.showAssertions || false,
+        showHumanReview: !prev[conversationId]?.showHumanReview
+      }
+    }));
+  };
+
+  const handleUpdateConversation = (updatedConversation: EvalConversation) => {
+    if (onConversationsChange) {
+      const updatedConversations = conversations.map(conv => 
+        conv.conversation_id === updatedConversation.conversation_id 
+          ? updatedConversation 
+          : conv
+      );
+      onConversationsChange(updatedConversations);
+    }
   };
 
   const handleSort = (newSortBy: 'date' | 'score' | 'length') => {
@@ -316,6 +524,14 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
             >
               Length {sortBy === 'length' && (sortOrder === 'desc' ? '↓' : '↑')}
             </Button>
+            <div className="border-l border-gray-300 mx-2 h-8"></div>
+            <Button
+              variant={showFailedAssertionsOnly ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowFailedAssertionsOnly(!showFailedAssertionsOnly)}
+            >
+              {showFailedAssertionsOnly ? '❌ Failed Only' : '🔍 Show Failed Assertions'}
+            </Button>
           </div>
         </div>
 
@@ -348,6 +564,12 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   AI Score
                 </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Assertions
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Human Review
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -365,9 +587,12 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({
                   <ConversationRow
                     key={conversation.id}
                     conversation={conversation}
-                    expanded={expandedConversations[conversation.id] || { id: conversation.id, showMessages: false, showFeedback: false }}
+                    expanded={expandedConversations[conversation.id] || { id: conversation.id, showMessages: false, showFeedback: false, showAssertions: false, showHumanReview: false }}
                     onToggleMessages={() => toggleConversationMessages(conversation.id)}
                     onToggleFeedback={() => toggleConversationFeedback(conversation.id)}
+                    onToggleAssertions={() => toggleConversationAssertions(conversation.id)}
+                    onToggleHumanReview={() => toggleConversationHumanReview(conversation.id)}
+                    onUpdateConversation={handleUpdateConversation}
                   />
                 ))
               )}

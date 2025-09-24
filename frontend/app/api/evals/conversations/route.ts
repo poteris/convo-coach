@@ -99,15 +99,31 @@ export async function GET(req: NextRequest) {
       .select('*');
     
     console.log('All feedback records found:', allFeedbackData?.length || 0);
+
+    // Get all assertion data
+    const { data: allAssertionData } = await supabase
+      .from('conversation_assertions')
+      .select('*');
+    
+    console.log('All assertion records found:', allAssertionData?.length || 0);
     
     // Process the data to include organization info and message counts
     const processedData = data.map(conversation => {
       // Manually find matching feedback
       const matchingFeedback = allFeedbackData?.find(f => f.conversation_id === conversation.conversation_id);
       
+      // Find matching assertions
+      const matchingAssertions = allAssertionData?.filter(a => a.conversation_id === conversation.conversation_id) || [];
+      const assertionSummary = {
+        total: matchingAssertions.length,
+        passed: matchingAssertions.filter(a => a.passed).length,
+        failed: matchingAssertions.filter(a => !a.passed).length
+      };
+      
       console.log(`Processing conversation ${conversation.conversation_id}:`);
       console.log(`- Messages: ${conversation.messages?.length || 0}`);
       console.log(`- Manual feedback match: ${matchingFeedback ? 'YES (score: ' + matchingFeedback.score + ')' : 'NO'}`);
+      console.log(`- Assertions: ${assertionSummary.passed}/${assertionSummary.total} passed`);
       
       return {
         ...conversation,
@@ -118,7 +134,11 @@ export async function GET(req: NextRequest) {
         feedback_summary: matchingFeedback?.summary || null,
         feedback_strengths: matchingFeedback?.strengths || [],
         feedback_areas_for_improvement: matchingFeedback?.areas_for_improvement || [],
-        has_feedback: !!matchingFeedback
+        has_feedback: !!matchingFeedback,
+        human_rating: matchingFeedback?.human_rating || null,
+        human_notes: matchingFeedback?.human_notes || null,
+        assertions: matchingAssertions,
+        assertion_summary: assertionSummary
       };
     });
 

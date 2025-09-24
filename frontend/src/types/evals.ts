@@ -3,6 +3,14 @@ export interface Organization {
   name: string;
 }
 
+export interface AssertionResult {
+  id: string;
+  assertion_name: string;
+  passed: boolean;
+  details: string;
+  created_at: string;
+}
+
 export interface EvalConversation {
   id: string;
   conversation_id: string;
@@ -19,6 +27,14 @@ export interface EvalConversation {
   feedback_strengths: Array<{ title: string; description: string }>;
   feedback_areas_for_improvement: Array<{ title: string; description: string }>;
   has_feedback: boolean;
+  human_rating: string | null;
+  human_notes: string | null;
+  assertions: AssertionResult[];
+  assertion_summary: {
+    total: number;
+    passed: number;
+    failed: number;
+  };
   scenario: {
     id: string;
     title: string;
