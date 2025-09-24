@@ -1,32 +1,39 @@
 import { PromptWithDetails, PromptWithDetailsSchema } from "@/types/prompt";
-import { z } from "zod";
 import { NextResponse } from "next/server";
-import { Result, err, ok } from "@/types/result";
+import { DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
 import { supabase } from "../../init";
 
-
-
-async function getSystemPrompts(): Promise<Result<PromptWithDetails[], string>> {
-  const { data, error } = await supabase.from("system_prompts").select("*").order("created_at", { ascending: true });
+async function getLatestSystemPrompt(): Promise<PromptWithDetails> {
+  const { data, error } = await supabase
+    .from("system_prompts")
+    .select("id, content, created_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
   if (error) {
-    console.error("Error fetching system prompts:", error);
-    return err(error.message);
+    console.error("Error fetching latest system prompt:", error);
+    throw new DatabaseError("Error fetching latest system prompt", "getLatestSystemPrompt", DatabaseErrorCodes.Select, {
+      error,
+    });
   }
-  const validationResult = z.array(PromptWithDetailsSchema).safeParse(data);
+  
+  const validationResult = PromptWithDetailsSchema.safeParse(data);
   if (!validationResult.success) {
-    console.error("Error validating system prompts data:", validationResult.error);
-    return err("Error validating data");
+    console.error("Error validating system prompt data:", validationResult.error);
+    throw new DatabaseError("Error validating system prompt data", "getLatestSystemPrompt", DatabaseErrorCodes.Select, {
+      error: validationResult.error.format(),
+    });
   }
-  return ok(validationResult.data);
+  return validationResult.data;
 }
 
 export async function GET() {
-  const result = await getSystemPrompts();
-
-  if (!result.isOk) {
-    return NextResponse.json({ message: result.error }, { status: 500 });
+  try {
+    const result = await getLatestSystemPrompt();
+    return NextResponse.json(result, { status: 200 });
+  } catch (error: unknown) {
+    console.error("Error in GET latest system prompt:", error);
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
-
-  return NextResponse.json(result.value, { status: 200 });
 }

@@ -17,14 +17,13 @@ on:
          required: true
 jobs:
   smoke-test-suite:
-    timeout-minutes: 60
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: develop # The github environment to use
     env: 
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         E2E_TEST_BASE_URL: ${{ vars.E2E_TEST_BASE_URL }}
-        NODE_ENV: ${{ vars.NODE_ENV }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
     - uses: actions/checkout@v4
@@ -50,29 +49,39 @@ jobs:
         echo "Started Next.js with PID $NEXTJS_PID"
         echo "NEXTJS_PID=$NEXTJS_PID" >> $GITHUB_ENV  # Store the PID for later use
         echo "Waiting for Next.js app to start..."
+        MAX_ATTEMPTS=12  # 2 minutes @ 10 seconds per attempt
+        attempt_counter=0
         until curl -s --head --request GET http://localhost:3000 | grep "200 OK"; do
           echo "Waiting for Next.js to be available..."
-          sleep 5
+          sleep 10
+          attempt_counter=$((attempt_counter + 1))
+          if [ $attempt_counter -ge $MAX_ATTEMPTS ]; then
+            echo "Timeout: Next.js app did not start within 2 minutes."
+            exit 1
+          fi
         done
         echo "Next.js app is up and running!"
+        echo "nextjs_app_started=true" >> $GITHUB_ENV
     - name: Run Playwright tests
+      if: ${{ success() && !cancelled() }}
       working-directory: ./frontend
       run: pnpm exec playwright test e2e
     - name: Convert JUnit output to CTRF
+      if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
       working-directory: ./frontend
       run: pnpm exec junit-to-ctrf playwright-report/results.xml -o playwright-report/results.json
-      if: always()
     - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+      if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
       with:
         name: playwright-report
-        path: frontend/playwright-report/      
+        path: frontend/playwright-report/
     - name: Publish Test Report Summary
+      if: ${{ env.nextjs_app_started == 'true' && !cancelled() }}
       uses: ctrf-io/github-test-reporter@v1
       with:
         report-path: 'frontend/playwright-report/*.json'
-      if: always()
     - name: Clean up
+      if: ${{ always() }}
       run: |
         if [ -n "$NEXTJS_PID" ]; then
           kill $NEXTJS_PID
@@ -81,11 +90,11 @@ jobs:
           echo "No Next.js process found."
         fi      
   slack-notifier:
-    runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     permissions:
       actions: read
       contents: read
+    runs-on: ubuntu-latest
     needs: smoke-test-suite
     steps:
       - name: Get failure info
@@ -114,6 +123,7 @@ jobs:
                 text:
                   type: "mrkdwn"
                   text: "*E2E smoke suite test result*: ${{ needs.smoke-test-suite.result == 'failure' && '❌ *FAILURE*' || '✓ Success' }} \n
+                    PR Title: `${{ github.event.pull_request.title }}`\n
                     See the report <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|here> 
                     ${{ needs.smoke-test-suite.result == 'failure' && '<!channel>' || '' }}\n
                     ${{ steps.failure-info.outputs.ERRORS_OUTPUT }}"
