@@ -124,7 +124,12 @@ const EvalsScreenContent: React.FC = () => {
       message_count: conv.message_count,
       feedback_score: conv.feedback_score,
       created_at: conv.created_at,
-      has_feedback: conv.has_feedback
+      has_feedback: conv.has_feedback,
+      assertions_passed: conv.assertion_summary?.passed || 0,
+      assertions_failed: conv.assertion_summary?.failed || 0,
+      assertions_total: conv.assertion_summary?.total || 0,
+      human_rating: conv.human_rating || '',
+      human_notes: conv.human_notes || ''
     }));
 
     const csvContent = [
