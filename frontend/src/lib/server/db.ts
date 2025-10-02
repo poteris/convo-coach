@@ -41,7 +41,7 @@ export async function getAllScenarios(): Promise<TrainingScenario[]> {
   return validationResult.data;
 }
 
-export async function getScenario(scenarioId: string): Promise<TrainingScenario> {
+export async function getScenario(scenarioId: string, organizationId: string = 'default'): Promise<TrainingScenario> {
     const { data, error } = await supabase
     .from("scenarios")
     .select(
@@ -279,7 +279,7 @@ export async function getFeedbackPrompt(): Promise<FeedbackPrompt> {
   return feedbackPrompt.data;
 }
 
-export async function getScenarioById(scenarioId: string): Promise<TrainingScenario> {
+export async function getScenarioById(scenarioId: string, organizationId: string = 'default'): Promise<TrainingScenario> {
   
     const { data: scenario, error } = await supabase.from("scenarios").select("*").eq("id", scenarioId).eq('organisation_id', organizationId).single();
 
