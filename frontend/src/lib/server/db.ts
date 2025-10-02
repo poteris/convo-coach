@@ -54,6 +54,7 @@ export async function getScenario(scenarioId: string): Promise<TrainingScenario>
     `
     )
     .eq("id", scenarioId)
+    .eq('organisation_id', organizationId)
     .single();
 
   if (error) {
@@ -72,8 +73,8 @@ export async function getScenario(scenarioId: string): Promise<TrainingScenario>
   };
 }
 
-export async function retrievePersona(personaId: string) {
-  const { data: personas, error } = await supabase.from("personas").select("*").eq("id", personaId).single();
+export async function retrievePersona(personaId: string, organizationId: string = 'default') {
+  const { data: personas, error } = await supabase.from("personas").select("*").eq("id", personaId).eq('organisation_id', organizationId).single();
 
   if (error) {
     const dbError = new DatabaseError("Error fetching persona", "retrievePersona", DatabaseErrorCodes.Select, {
@@ -280,7 +281,7 @@ export async function getFeedbackPrompt(): Promise<FeedbackPrompt> {
 
 export async function getScenarioById(scenarioId: string): Promise<TrainingScenario> {
   
-    const { data: scenario, error } = await supabase.from("scenarios").select("*").eq("id", scenarioId).single();
+    const { data: scenario, error } = await supabase.from("scenarios").select("*").eq("id", scenarioId).eq('organisation_id', organizationId).single();
 
   if (error) {
     const dbError = new DatabaseError("Error fetching scenario", "getScenarioById", DatabaseErrorCodes.Select, {
