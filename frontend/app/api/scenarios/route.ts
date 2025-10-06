@@ -1,7 +1,7 @@
 import { getScenarios } from "@/lib/server/services/scenarios/getScenarios";
 import { TrainingScenario } from "@/types/scenarios";
 import { NextResponse, NextRequest } from "next/server";
-import { supabase } from "../init";
+import { supabaseService as supabase } from "../service-init";
 import {  DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
 import { getTenantFromRequest } from "@/lib/tenant";
 

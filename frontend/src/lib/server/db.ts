@@ -3,7 +3,7 @@ import { TrainingScenario, TrainingScenarioSchema } from "@/types/scenarios";
 import { Persona } from "@/types/persona";
 import { z } from "zod";
 import { DatabaseError, DatabaseErrorCodes} from "@/utils/errors";
-import { supabase } from "../../../app/api/init";
+import { supabaseService as supabase } from "../../../app/api/service-init";
 
 
 export async function getAllScenarios(organizationId: string = 'default'): Promise<TrainingScenario[]> {

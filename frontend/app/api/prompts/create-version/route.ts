@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
-import { supabase } from "../../init";
+import { supabaseService as supabase } from "../../service-init";
 import {DatabaseError, DatabaseErrorCodes} from "@/utils/errors";
 
 async function createNewPromptVersion(type: "system" | "feedback" | "persona", content: string) {

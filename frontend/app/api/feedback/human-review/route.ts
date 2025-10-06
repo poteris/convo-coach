@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { supabase } from "../../init";
+import { supabaseService as supabase } from "../../service-init";
 
 const humanReviewSchema = z.object({
   conversationId: z.string(),

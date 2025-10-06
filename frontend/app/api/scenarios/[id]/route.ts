@@ -1,4 +1,4 @@
-import { supabase } from "../../init";
+import { supabaseService as supabase } from "../../service-init";
 import { NextRequest, NextResponse } from "next/server";
 import { getScenarioById } from "@/lib/server/services/scenarios/getScenarios";
 import { DatabaseError, DatabaseErrorCodes, isError } from "@/utils/errors";

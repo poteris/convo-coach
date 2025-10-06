@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantFromRequest } from '@/lib/tenant';
-import { supabase } from '../../../init';
+import { supabaseService as supabase } from '../../../service-init';
 
 export async function GET(
   request: NextRequest,

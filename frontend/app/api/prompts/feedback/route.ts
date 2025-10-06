@@ -2,7 +2,7 @@
 import { PromptData, PromptDataSchema } from "@/types/prompt";
 import { NextResponse } from "next/server";
 import { DatabaseError, DatabaseErrorCodes } from "@/utils/errors";
-import { supabase } from "../../init";
+import { supabaseService as supabase } from "../../service-init";
 
 
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { feedbackDataSchema } from "@/types/feedback";
 import { generateFeedbackUsingLLM } from "@/lib/server/services/feedback/feedbackCompletion";
-import { supabase } from "../../init";
+import { supabaseService as supabase } from "../../service-init";
 import { runAllAssertions } from "@/lib/server/services/assertions/conversationAssertions";
 
 export async function POST(req: NextRequest) {
