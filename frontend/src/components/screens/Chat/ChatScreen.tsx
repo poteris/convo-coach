@@ -194,7 +194,11 @@ const ChatScreen = () => {
       {/* Messages Container */}
       <div className="mb-4">
         {conversationData?.messages.map((m) => (
-          <div key={m.id} className={`mb-4 ${m.role === "user" ? "text-right" : "text-left"}`}>
+          <div 
+            key={m.id} 
+            className={`mb-4 ${m.role === "user" ? "text-right" : "text-left"}`}
+            data-testid={m.role === "user" ? "user-message" : "bot-message"}
+          >
             <div
               className={`inline-block p-4 rounded-lg text-sm max-w-[600px] break-words ${
                 m.role === "user"
