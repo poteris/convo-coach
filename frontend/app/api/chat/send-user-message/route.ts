@@ -4,7 +4,7 @@ import { z } from "zod";
 import {  getAIResponse, createBasePromptForMessage } from "@/lib/server/llm";
 import { getConversationContext, saveMessages } from "@/lib/server/db";
 import OpenAI from "openai";
-import { supabase } from "../../init";
+import { supabaseService as supabase } from "../../service-init";
 
 const userMessageResponseSchema = z.object({
   id: z.string(),

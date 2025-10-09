@@ -3,17 +3,17 @@ import { TrainingScenario, TrainingScenarioSchema } from "@/types/scenarios";
 import { Persona } from "@/types/persona";
 import { z } from "zod";
 import { DatabaseError, DatabaseErrorCodes} from "@/utils/errors";
-import { supabase } from "../../../app/api/init";
+import { supabaseService as supabase } from "../../../app/api/service-init";
 
 
-export async function getAllScenarios(): Promise<TrainingScenario[]> {
+export async function getAllScenarios(organizationId: string = 'default'): Promise<TrainingScenario[]> {
   const { data, error } = await supabase.from("scenarios").select(`
     id,
     title,
     description,
     context,
     scenario_objectives (objective)
-  `);
+  `).eq('organisation_id', organizationId);
 
   if (error) {
     const dbError = new DatabaseError("Error fetching scenarios", "getAllScenarios", DatabaseErrorCodes.Select, {
@@ -106,6 +106,38 @@ export async function getSystemPrompt(promptId: number): Promise<string> {
     return promptData.content;
 }
 
+export async function getLatestSystemPromptId(): Promise<number> {
+  const { data, error } = await supabase
+    .from("system_prompts")
+    .select("id")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.warn("No system prompt found, using default ID 1");
+    return 1;
+  }
+
+  return data.id;
+}
+
+export async function getLatestFeedbackPromptId(): Promise<number> {
+  const { data, error } = await supabase
+    .from("feedback_prompts")
+    .select("id")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.warn("No feedback prompt found, using default ID 1");
+    return 1;
+  }
+
+  return data.id;
+}
+
 export async function getConversationContext(conversationId: string) {
   const { data, error } = await supabase
     .from("conversations")
@@ -123,8 +155,28 @@ export async function getConversationContext(conversationId: string) {
     throw dbError;
   }
 
-  const scenario = await getScenario(data.scenario_id);
-  const persona = await retrievePersona(data.persona_id);
+  // First get the scenario to determine the organization
+  const { data: scenarioData, error: scenarioError } = await supabase
+    .from("scenarios")
+    .select("organisation_id")
+    .eq("id", data.scenario_id)
+    .single();
+
+  if (scenarioError) {
+    const dbError = new DatabaseError("Error fetching scenario organization", "getConversationContext", DatabaseErrorCodes.Select, {
+      details: {
+        error: scenarioError,
+      }
+    });
+    console.error(dbError.toLog());
+    throw dbError;
+  }
+
+  const organizationId = scenarioData.organisation_id;
+
+  // Now get the full scenario and persona using the correct organization
+  const scenario = await getScenario(data.scenario_id, organizationId);
+  const persona = await retrievePersona(data.persona_id, organizationId);
   const systemPrompt = await getSystemPrompt(data.system_prompt_id);
 
   if (!scenario || !persona) {
@@ -157,7 +209,12 @@ export async function saveMessages(conversationId: string, userMessage: string, 
 }
 
 export async function upsertPersona(persona: Persona) {
-  const { error } = await supabase.from("personas").upsert(persona, { onConflict: "id" });
+  // Ensure persona has organisation_id, default to 'default' if not provided
+  const personaWithOrg = {
+    ...persona,
+    organisation_id: persona.organisation_id || 'default'
+  };
+  const { error } = await supabase.from("personas").upsert(personaWithOrg, { onConflict: "id" });
 
   if (error) {
     const dbError = new DatabaseError("Error upserting persona", "upsertPersona", DatabaseErrorCodes.Insert, {
@@ -255,10 +312,15 @@ const feedbackPromptSchema = z.object({
 type FeedbackPrompt = z.infer<typeof feedbackPromptSchema>;
 
 export async function getFeedbackPrompt(): Promise<FeedbackPrompt> {
-  const { data, error } = await supabase.from("feedback_prompts").select("content").single();
+  const { data, error } = await supabase
+    .from("feedback_prompts")
+    .select("content")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
   if (error) {
-    const dbError = new DatabaseError("Error fetching feedback prompt", "getFeedbackPrompt", DatabaseErrorCodes.Select, {
+    const dbError = new DatabaseError("Error fetching latest feedback prompt", "getFeedbackPrompt", DatabaseErrorCodes.Select, {
       details: {
         error: error,
       }
