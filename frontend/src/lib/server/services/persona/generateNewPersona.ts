@@ -1,9 +1,8 @@
 'use server'
-import OpenAI from "openai";
 import { genericNewPersonaPrompt } from "@/utils/genericNewPersonaPrompt";
 import { v4 as uuidv4 } from "uuid";
 import { tools as openAifunctions } from "@/utils/openaiTools";
-import { openaiClient } from "../../../../../app/api/init";
+import { getOpenAIClient } from "../openai/OpenAIClientFactory";
 
 function generateRandomPersonaProperties() {
   // Randomly select a segment
@@ -34,8 +33,8 @@ function generateRandomPersonaProperties() {
   };
 }
 
-export const generateNewPersona = async () => {
-  let toolCall = await generatePersona();
+export const generateNewPersona = async (headers: Headers = new Headers()) => {
+  let toolCall = await generatePersona(headers);
 
   if (!toolCall || toolCall.function.name !== "generate_persona") {
     throw new Error("Function call missing or incorrect.");
@@ -71,7 +70,7 @@ const retryPersonaGeneration = async () => {
   return retryToolCall;
 }
 
-const generatePersona = async () => {
+const generatePersona = async (headers: Headers = new Headers()) => {
     // Generate random properties
     const randomProperties = generateRandomPersonaProperties();
       
@@ -81,9 +80,10 @@ const generatePersona = async () => {
     prompt = prompt.replace('{{segment}}', randomProperties.segment);
     prompt = prompt.replace('{{gender}}', randomProperties.gender);
       
-    const messages: OpenAI.ChatCompletionMessageParam[] = [{ role: "user", content: prompt }];
+    const messages = [{ role: "user" as const, content: prompt }];
     const llm = process.env.LLM_MODEL ?? "gpt-4o";
-    const completion = await openaiClient.chat.completions.create({
+    const openaiClient = getOpenAIClient(headers);
+    const completion = await openaiClient.createChatCompletion({
         model: llm,
         messages: messages,
         tools: openAifunctions,

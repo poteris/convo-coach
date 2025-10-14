@@ -1,20 +1,33 @@
 
+'use client';
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { useTenant } from '@/context/TenantContext'
+
 const Navbar = () => {
+  const { branding } = useTenant();
+  
+  // Use custom logo if available, otherwise fallback to default
+  const logoSrc = branding.logoUrl || "/logo.svg";
+
   return (
-    <nav className="h-[85px] bg-primary w-full flex items-center justify-between px-4 md:px-8">
+    <nav className="h-[85px] w-full flex items-center justify-between px-4 md:px-8" style={{ backgroundColor: branding.primaryColor }}>
       <Link href="/" className="text-white text-[30px] font-regular ml-8">
         Rep Coach
       </Link>
 
       <div className="relative h-12 w-12 md:h-16 md:w-16">
         <Image
-          src="/logo.svg"
+          src={logoSrc}
           alt="Rep Coach Logo"
           fill
-          className="object-contain"
+          className="object-contain rounded-full"
           priority
+          onError={(e) => {
+            // Fallback to default logo if custom logo fails to load
+            e.currentTarget.src = "/logo.svg";
+          }}
         />
       </div>
     </nav>

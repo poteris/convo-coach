@@ -1,8 +1,8 @@
-import { test, expect, type Page, type Browser, ConsoleMessage } from '@playwright/test';
+import { test, expect, type Page, type Browser, ConsoleMessage, Response } from '@playwright/test';
 import dotenv from 'dotenv';
 
-// Load environment variables from .env file
-dotenv.config();
+// Load environment variables from root level .env file
+dotenv.config({ path: '../.env' });
 
 const baseUrl = process.env.E2E_TEST_BASE_URL;
 const startChatText = "hi there";
@@ -20,6 +20,12 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
       console.log('Location:', msg.location());
     });
   }
+  if (process.env.USE_MOCK_OPENAI === 'true') {
+    console.log('Executing tests using Mock OpenAI API');
+  } else {
+    console.warn('*** Executing tests using Open AI API. Refer to README for mock API usage ***');
+  }
+
 });
 
 test('Landing page loads and the call to action button starts the user journey for member recruitment', async () => {
@@ -40,9 +46,24 @@ test('Route back to landing page from scenario setup page', async () => {
   await expect(page).toHaveURL(`${baseUrl}`);
 });
 
-test('Persona loads on scenario page', async () => {
-  await page.goto(`${baseUrl}/scenario-setup?scenarioId=member-recruitment`);
+test('Persona loads on scenario page, using real OpenAI API', async () => {
+  await page.setExtraHTTPHeaders({
+    'x-use-real-openai': 'true'
+  });
+  await page.goto(`${baseUrl}/scenario-setup?scenarioId=member-recruitment`, {
+    timeout: 15000, // Timeout allows (a lot of) timefor API to respond
+  });
   await page.waitForResponse(`${baseUrl}/api/persona/generate-new-persona`);
+  await expect(page.getByRole('heading', { name: 'Personal Background' })).toBeVisible();
+});
+
+test('Persona regenerates on scenario page, using mock OpenAI API', async () => {
+  const regenerateButton = page.getByTestId('regeneratePersonaButton');
+  await expect(regenerateButton).toBeVisible(); 
+  await Promise.all([
+    page.waitForResponse(`${baseUrl}/api/persona/generate-new-persona`),
+    regenerateButton.click()
+  ]);
   await expect(page.getByRole('heading', { name: 'Personal Background' })).toBeVisible({ timeout: 15000 });
 });
 
@@ -70,7 +91,7 @@ test('Text box is visible: Entering text and pressing CTA starts chat ', async (
 
 test('Chat page loads and messages can be exchanged', async () => {
   await expect(page.getByText(startChatText)).toBeVisible();
-  const botMessage = page.locator('.text-left');
+  const botMessage = page.getByTestId('bot-message');
   await botMessage.first().waitFor();
   await expect(botMessage).toHaveCount(1);
   const chatTextbox = page.getByRole('textbox', { name: 'Type your message...' });
@@ -79,7 +100,7 @@ test('Chat page loads and messages can be exchanged', async () => {
   await expect(page.getByTestId('sendMessageButton')).toBeVisible();
   await page.getByTestId('sendMessageButton').click();
   await page.waitForResponse(`${baseUrl}/api/chat/send-user-message`);
-  const userMessages = page.locator('.text-right');
+  const userMessages = page.getByTestId('user-message');
   await expect(userMessages).toHaveCount(2);
   await expect(botMessage).toHaveCount(2);
 });
@@ -98,14 +119,13 @@ test('Chat can be ended and user is routed to feedback page', async () => {
   // Check routing to feedback page
   await Promise.all([
     page.waitForURL(`${baseUrl}/feedback**`),
+    page.waitForResponse(`${baseUrl}/api/feedback/generate-feedback`),
     yesButton.click()
   ]);
   await expect(page.url()).toEqual(expect.stringContaining(`${baseUrl}/feedback`));
 });
 
 test('Feedback report is presented to user', async () => {
-  await page.waitForResponse(`${baseUrl}/api/feedback/generate-feedback`);
-  
   // Check high level report content
   await expect(page.getByRole('heading', { name: 'Feedback' })).toBeVisible();
   
