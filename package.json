@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "eslint-config-next": "^15.0.1",
-    "next": "^15.0.1",
+    "next": "^15.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
