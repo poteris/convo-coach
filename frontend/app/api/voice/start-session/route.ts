@@ -6,7 +6,7 @@ import { createBasePromptForMessage } from "@/lib/server/llm";
 import { supabaseService as supabase } from "../../service-init";
 
 // Simple in-memory cache to prevent duplicate agent creation during React StrictMode
-const activeCreations = new Map<string, Promise<any>>();
+const activeCreations = new Map<string, Promise<Awaited<ReturnType<typeof createVoiceSession>>>>();
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       try {
         const existingResult = await activeCreations.get(requestKey);
         return NextResponse.json(existingResult, { status: 200 });
-      } catch (error) {
+      } catch {
         console.error('❌ Existing creation failed, proceeding with new attempt');
         activeCreations.delete(requestKey);
       }
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create and cache the creation promise
-    const creationPromise = createVoiceSession(conversationId, personaId, scenarioId);
+    const creationPromise = createVoiceSession(conversationId, personaId);
     activeCreations.set(requestKey, creationPromise);
 
     try {
@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function createVoiceSession(conversationId: string, personaId: string, scenarioId: string) {
+async function createVoiceSession(conversationId: string, personaId: string) {
   // 1. Verify organization has voice enabled
   console.log('👤 Fetching persona...');
   const { data: persona } = await supabase
@@ -219,7 +219,11 @@ async function createVoiceSession(conversationId: string, personaId: string, sce
     .select('system_prompt_id')
     .eq('conversation_id', conversationId)
     .single();
-  
+
+  if (!conversation) {
+    throw new Error(`Conversation ${conversationId} not found`);
+  }
+
   const systemPromptTemplate = await getSystemPrompt(conversation.system_prompt_id);
   
   // Build full system prompt with persona and scenario
@@ -231,14 +235,6 @@ async function createVoiceSession(conversationId: string, personaId: string, sce
   );
 
   console.log('📊 System prompt created, length:', systemPrompt.length);
-  console.log('📝 System prompt preview (first 500 chars):', systemPrompt.substring(0, 500));
-  console.log('📝 System prompt template ID:', conversation.system_prompt_id);
-  console.log('👤 Persona details for prompt:', {
-    name: persona.name,
-    job: persona.job,
-    segment: persona.segment,
-    major_issues_in_workplace: persona.major_issues_in_workplace
-  });
 
   // 3. Create ElevenLabs agent with persona's voice
   console.log('🤖 Creating ElevenLabs agent...');

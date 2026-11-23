@@ -311,6 +311,7 @@ const VoiceChatScreen = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ElevenLabs sends many event shapes
   const handleWebSocketMessage = (message: any) => {
     // Only log important message types to reduce noise
     if (['conversation_initiation_metadata', 'user_transcript', 'agent_response', 'interruption', 'agent_response_start', 'agent_response_end'].includes(message.type)) {

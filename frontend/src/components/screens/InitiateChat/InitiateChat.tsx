@@ -74,9 +74,9 @@ const InitiateChatContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { branding } = useTenant();
   
-  // Voice mode is always available for now (bypassing database check)
-  // TODO: Re-enable database check once voice_enabled is properly set
-  const isVoiceAvailable = true; // Was: branding.voiceEnabled && persona?.voice_id;
+  // Voice mode is switched on per organisation in Organiser Admin. Personas without
+  // an assigned voice get a gender-matched default on the server.
+  const isVoiceAvailable = !!branding.voiceEnabled;
 
   useEffect(() => {
     const loadScenario = async () => {

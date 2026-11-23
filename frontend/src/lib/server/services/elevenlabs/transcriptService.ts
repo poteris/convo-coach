@@ -1,109 +1,87 @@
-'use server'
+// Server-only module. Not marked 'use server' so these DB writes are not exposed
+// to the browser as server actions.
 
 import { supabaseService as supabase } from "../../../../../app/api/service-init";
-
-interface TranscriptMessage {
-  role: 'agent' | 'user';
-  message: string;
-  time_in_call_secs: number;
-}
-
-interface ElevenLabsTranscript {
-  conversation_id: string;
-  agent_id: string;
-  transcript: TranscriptMessage[];
-  call_duration_secs: number;
-  analysis?: any;
-}
+import type { ElevenLabsTranscript } from "./agentService";
 
 /**
- * Sync conversation transcript from ElevenLabs to our messages table
+ * Copy an ElevenLabs transcript into our messages table so feedback works the
+ * same way as for text conversations. Safe to call more than once.
  */
 export async function syncTranscriptToDatabase(
   conversationId: string,
   elevenLabsData: ElevenLabsTranscript
-): Promise<void> {
-  console.log('📝 Starting transcript sync for conversation:', conversationId);
-  console.log('📊 ElevenLabs data:', {
-    conversation_id: elevenLabsData.conversation_id,
-    agent_id: elevenLabsData.agent_id,
-    transcript_length: elevenLabsData.transcript?.length || 0,
-    call_duration: elevenLabsData.call_duration_secs
-  });
+): Promise<number> {
+  const { data: existing } = await supabase
+    .from("conversations")
+    .select("voice_metadata")
+    .eq("conversation_id", conversationId)
+    .single();
 
-  if (!elevenLabsData.transcript || elevenLabsData.transcript.length === 0) {
-    console.warn('⚠️ No transcript messages to sync for conversation:', conversationId);
-    return;
+  if (existing?.voice_metadata?.synced_at) {
+    return existing.voice_metadata.message_count ?? 0;
   }
 
-  // Transform ElevenLabs messages to our format
-  const callDuration = elevenLabsData.call_duration_secs || 0;
-  const messagesToInsert = elevenLabsData.transcript.map((msg, index) => ({
+  const transcript = (elevenLabsData.transcript || []).filter((msg) => msg.message?.trim());
+  if (transcript.length === 0) {
+    console.warn("No transcript messages to sync for conversation:", conversationId);
+    return 0;
+  }
+
+  const callDuration = elevenLabsData.metadata?.call_duration_secs ?? elevenLabsData.call_duration_secs ?? 0;
+  const startedAt = Date.now() - callDuration * 1000;
+
+  const messagesToInsert = transcript.map((msg) => ({
     conversation_id: conversationId,
-    role: msg.role === 'agent' ? 'assistant' : 'user',
+    role: msg.role === "agent" ? "assistant" : "user",
     content: msg.message,
-    // Use time_in_call to calculate approximate timestamp (working backwards from now)
-    created_at: new Date(Date.now() - ((callDuration - (msg.time_in_call_secs || 0)) * 1000)).toISOString()
+    created_at: new Date(startedAt + (msg.time_in_call_secs || 0) * 1000).toISOString(),
   }));
 
-  // Insert messages in batch
-  const { error: messagesError } = await supabase
-    .from('messages')
-    .insert(messagesToInsert);
-
+  const { error: messagesError } = await supabase.from("messages").insert(messagesToInsert);
   if (messagesError) {
-    console.error('Error syncing transcript messages:', messagesError);
-    throw new Error('Failed to sync transcript to database');
+    console.error("Error syncing transcript messages:", messagesError);
+    throw new Error("Failed to sync transcript to database");
   }
 
-  // Update conversation metadata
   const { error: conversationError } = await supabase
-    .from('conversations')
+    .from("conversations")
     .update({
-      voice_duration_seconds: elevenLabsData.call_duration_secs,
+      elevenlabs_conversation_id: elevenLabsData.conversation_id,
+      voice_duration_seconds: callDuration,
       voice_metadata: {
         agent_id: elevenLabsData.agent_id,
         elevenlabs_conversation_id: elevenLabsData.conversation_id,
-        message_count: elevenLabsData.transcript.length,
-        synced_at: new Date().toISOString()
-      }
+        message_count: messagesToInsert.length,
+        synced_at: new Date().toISOString(),
+      },
     })
-    .eq('conversation_id', conversationId);
+    .eq("conversation_id", conversationId);
 
   if (conversationError) {
-    console.error('Error updating conversation metadata:', conversationError);
-    // Don't throw here - messages are already saved
+    // Messages are already saved, so don't fail the request.
+    console.error("Error updating conversation metadata:", conversationError);
   }
 
-  console.log(`✅ Successfully synced ${messagesToInsert.length} messages for conversation ${conversationId}`);
-  console.log('📋 Messages synced:', messagesToInsert.map(msg => `${msg.role}: ${msg.content.substring(0, 50)}...`));
+  return messagesToInsert.length;
 }
 
 /**
  * Mark conversation as voice-based when starting
  */
-export async function markConversationAsVoice(
-  conversationId: string,
-  elevenLabsAgentId: string
-): Promise<void> {
+export async function markConversationAsVoice(conversationId: string, elevenLabsAgentId: string): Promise<void> {
   const { error } = await supabase
-    .from('conversations')
+    .from("conversations")
     .update({
-      interaction_mode: 'voice',
+      interaction_mode: "voice",
       is_voice_conversation: true,
-      elevenlabs_agent_id: elevenLabsAgentId
+      elevenlabs_agent_id: elevenLabsAgentId,
     })
-    .eq('conversation_id', conversationId)
-    .eq('elevenlabs_agent_id', 'CREATING'); // Only update if still in CREATING state
+    .eq("conversation_id", conversationId)
+    .eq("elevenlabs_agent_id", "CREATING"); // Only update if still in CREATING state
 
   if (error) {
-    console.error('Error marking conversation as voice:', error);
-    throw new Error('Failed to update conversation mode');
+    console.error("Error marking conversation as voice:", error);
+    throw new Error("Failed to update conversation mode");
   }
-  
-  console.log('✅ Successfully updated conversation with agent ID:', elevenLabsAgentId);
 }
-
-
-
-

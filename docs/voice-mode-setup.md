@@ -131,3 +131,10 @@ If you continue having issues after following these steps:
 
 
 
+
+## Optional settings
+
+- `ELEVEN_LABS_LLM` — model ElevenLabs runs the persona on (default `gpt-4o-mini`; must be a model ElevenLabs Conversational AI supports).
+- `ELEVEN_LABS_TTS_MODEL` — text-to-speech model (default `eleven_flash_v2`).
+
+Voice chat only shows on the Initiate Chat screen when **Enable Voice Chat** is switched on for the organisation in Organiser Admin. One ElevenLabs agent is created per conversation and deleted when the call ends and the transcript is saved.

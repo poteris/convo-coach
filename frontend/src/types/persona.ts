@@ -14,11 +14,11 @@ export interface Persona {
     major_issues_in_workplace: string;
     personality_traits: string;
     emotional_conditions: string;
-    organisation_id?: string;
+    organisation_id?: string | null;
     // Voice fields
-    voice_id?: string;
-    voice_name?: string;
-    voice_accent?: string;
+    voice_id?: string | null;
+    voice_name?: string | null;
+    voice_accent?: string | null;
   }
 
 export const personaSchema = z.object({

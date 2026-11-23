@@ -1,58 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getConversationTranscript } from "@/lib/server/services/elevenlabs/agentService";
+import { deleteElevenLabsAgent, getConversationTranscript } from "@/lib/server/services/elevenlabs/agentService";
 import { syncTranscriptToDatabase } from "@/lib/server/services/elevenlabs/transcriptService";
+import { supabaseService as supabase } from "../../service-init";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { conversationId, elevenLabsConversationId } = body;
+    const { conversationId, elevenLabsConversationId } = await req.json();
 
     if (!conversationId) {
-      return NextResponse.json(
-        { error: 'Missing conversationId' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing conversationId" }, { status: 400 });
     }
 
-    // If elevenLabsConversationId provided, fetch and sync transcript
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("elevenlabs_agent_id")
+      .eq("conversation_id", conversationId)
+      .single();
+    const agentId = conversation?.elevenlabs_agent_id;
+
+    let messageCount = 0;
+    let transcriptError: string | undefined;
+
     if (elevenLabsConversationId) {
       try {
         const transcriptData = await getConversationTranscript(elevenLabsConversationId);
-        
-        // Sync transcript to our database
-        await syncTranscriptToDatabase(conversationId, transcriptData);
-
-        return NextResponse.json({
-          success: true,
-          messageCount: transcriptData.transcript?.length || 0,
-          duration: transcriptData.call_duration_secs || 0
-        }, { status: 200 });
-      } catch (transcriptError) {
-        console.error('Error fetching/syncing transcript:', transcriptError);
-        // Don't fail the whole request - transcript might be available later
-        return NextResponse.json({
-          success: false,
-          error: 'Failed to fetch transcript',
-          details: transcriptError instanceof Error ? transcriptError.message : 'Unknown error'
-        }, { status: 200 }); // Still return 200 so UI can proceed
+        // Only trust a transcript that belongs to this conversation's agent.
+        if (agentId && transcriptData.agent_id !== agentId) {
+          return NextResponse.json({ error: "Transcript does not belong to this conversation" }, { status: 403 });
+        }
+        messageCount = await syncTranscriptToDatabase(conversationId, transcriptData);
+      } catch (error) {
+        // Transcript may not be ready yet; let the UI carry on to feedback.
+        console.error("Error fetching/syncing transcript:", error);
+        transcriptError = error instanceof Error ? error.message : "Unknown error";
       }
     }
 
-    // If no elevenLabsConversationId, just acknowledge
-    return NextResponse.json({
-      success: true,
-      message: 'Session ended (no transcript to sync)'
-    }, { status: 200 });
+    // Per-conversation agents are disposable; remove them once the transcript is saved.
+    if (agentId && agentId !== "CREATING" && !transcriptError) {
+      try {
+        await deleteElevenLabsAgent(agentId);
+      } catch (error) {
+        console.error("Error deleting ElevenLabs agent:", agentId, error);
+      }
+    }
 
-  } catch (error) {
-    console.error('Error ending voice session:', error);
     return NextResponse.json(
-      { error: 'Failed to end voice session', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+      transcriptError
+        ? { success: false, error: "Failed to fetch transcript", details: transcriptError }
+        : { success: true, messageCount },
+      { status: 200 }
     );
+  } catch (error) {
+    console.error("Error ending voice session:", error);
+    return NextResponse.json({ error: "Failed to end voice session" }, { status: 500 });
   }
 }
-
-
-
-
