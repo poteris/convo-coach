@@ -14,7 +14,11 @@ export interface Persona {
     major_issues_in_workplace: string;
     personality_traits: string;
     emotional_conditions: string;
-    organisation_id?: string;
+    organisation_id?: string | null;
+    // Voice fields
+    voice_id?: string | null;
+    voice_name?: string | null;
+    voice_accent?: string | null;
   }
 
 export const personaSchema = z.object({
@@ -31,5 +35,9 @@ export const personaSchema = z.object({
     major_issues_in_workplace: z.string(),
     personality_traits: z.string(),
     emotional_conditions: z.string(),
-    organisation_id: z.string().optional(),
+    organisation_id: z.string().nullish(), // Can be null, undefined, or string
+    // Voice fields - nullable because DB returns null when not set
+    voice_id: z.string().nullish(),
+    voice_name: z.string().nullish(),
+    voice_accent: z.string().nullish(),
 });
